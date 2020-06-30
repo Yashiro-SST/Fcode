@@ -274,7 +274,7 @@ module daikei_sekibun
 
 !!!0630!!
 !!!06/30 17:09!!!
-
+!!!06/30 17:14!!!
 
 
 end module daikei_sekibun
