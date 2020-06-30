@@ -273,7 +273,7 @@ module daikei_sekibun
     !end function F2_D
 
 !!!0630!!
-
+!!!06/30 17:09!!!
 
 
 
