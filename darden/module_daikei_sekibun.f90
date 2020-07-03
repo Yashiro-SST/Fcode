@@ -1,5 +1,3 @@
-!---module function of F1, F2---!
-
 module daikei_sekibun
   implicit none
   contains
@@ -238,11 +236,9 @@ module daikei_sekibun
       real(8) pi, FYRC, F1C
 
       pi = 2.0d0 * acos(0.0d0)
-
       FYRC = - sqrt(S * mu) * C0**(-1.50d0) &
             * (FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / 2.0d0 * pi &
             + (FYR_C1 + FYR_C2 + FYR_C3 + FYR_C4) / (pi * sqrt(yr - l))
-
       F1C = 1.0d0 / mu + B / (S * mu) - FYRC 
 
     end function F1_partialC
@@ -395,27 +391,157 @@ module daikei_sekibun
 
     end function F2initial
 
+    function Q_partialC1(l, S, yf, yr, A, C0, mu, dn) result(QC1)
+      real(8), intent(in) :: l, S, yf, yr, A, C0, mu
+      integer, intent(in) :: dn
+      real(8) dx, x, y, t, tc, sum, pi, QC1
+      integer i, n
 
-    !function Q_partialC1
-    !end function Q_partialC1
+      pi = 2.0d0 * acos(0.0d0)
+      dx =  l / dble(dn) 
+      sum = 0.0d0
+      n = nint((yf / 2.0d0) / dx)
 
-    !function Q_partialC2
-    !end function Q_partialC2
+      do i = 0, n
+        x = dx * dble(i)
+        t = atan(sqrt((yr - l) / (l - x)))
+        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        y = 2.0d0 * x / yf * ((2.0d0 * C0 / (S * yf) - 0.5d0) * t + A * tc)
 
-    !function Q_partialC3
-    !end function Q_partialC3
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
 
-    !function Q_partialC4
-    !end function Q_partialC4
+      QC1 = - 2.0d0 / pi * sum
 
-    !function Q_partialC
-    !end function Q_partialC
+    end function Q_partialC1
 
-    !unction F2_partialC
-    !end function F2_C
+    function Q_partialC2(l, S, yf, yr, A, C0, mu, dn) result(QC2)
+      real(8), intent(in) :: l, S, yf, yr, A, C0, mu
+      integer, intent(in) :: dn
+      real(8) dx, x, y, t, tc, sum, pi, QC2
+      integer i, n
 
-    !function F2_partialD
-    !end function F2_D
+      pi = 2.0d0 * acos(0.0d0)
+      dx =  l / dble(dn) 
+      sum = 0.0d0
+      n = nint((yf / 2.0d0) / dx)
+
+      do i = 0, n
+        x = dble(nint(yf / 2.0d0)) + dx * dble(i)
+        t = atan(sqrt((yr - l) / (l - x)))
+        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        y = (2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.5d0) &
+            * (2.0d0 * x / yf - 2.0d0) * t &
+            + (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf - 2.0d0)) * tc
+
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
+
+      QC2 = - 2.0d0 / pi * sum
+
+    end function Q_partialC2
+
+    function Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn) result(QC3)
+      real(8), intent(in) :: l, S, yf, yr, lam, B, C0, mu
+      integer, intent(in) :: dn
+      real(8) dx, x, y, t, tc, sum, pi, QC3
+      integer i, n
+
+      pi = 2.0d0 * acos(0.0d0)
+      dx =  l / dble(dn) 
+      sum = 0.0d0
+      n = nint((lam - yf) / dx)
+
+      do i = 0, n
+        x = dble(nint(yf)) + dx * dble(i)
+        t = atan(sqrt((yr - l) / (l - x)))
+        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        y = t + (B * (x - yf) + C0) * tc
+        
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
+
+      QC3 = - 2.0d0 / pi * sum
+
+    end function Q_partialC3
+
+    function Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn) result(QC4)
+      real(8), intent(in) :: l, S, yf, lam, B, C0, D0, mu
+      integer, intent(in) :: dn
+      real(8) dx, x, y, tc, sum, pi, QC4
+      integer i, n
+
+      pi = 2.0d0 * acos(0.0d0)
+      dx =  l / dble(dn) 
+      sum = 0.0d0
+      n = nint((l - lam) / dx)
+
+      do i = 0, n
+        x = dble(nint(lam)) + dx * dble(i)
+        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        y = (B * (x - yf) + D0) * tc
+
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
+
+      QC4 = - 2.0d0 / pi * sum
+
+    end function Q_partialC4
+
+    function F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4) result(F2C)
+      real(8), intent(in) :: l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4
+      real(8) QC_sum, smu, F2C
+
+      smu = S * mu
+      QC_sum = QC1 + QC2 + QC3 + QC4
+      F2C = C0 * (B / smu + (S / (2.0d0 * smu)) * (1.0d0 / smu + 1.0d0)) &
+            - D0 + S * (l - D0) / 2.0d0 - QC_sum
+
+    end function F2_partialC
+
+    function F2_partialD(l, S, yr, lam, dn) Result(F2D)
+
+      real(8), intent(in) :: l, S, yr, lam
+      integer, intent(in) :: dn
+      real(8) dx, x, y, sum, pi, QD, F2D
+      integer i, n
+
+      pi = 2.0d0 * acos(0.0d0)
+      dx =  l / dble(dn) 
+      sum = 0.0d0
+      n = nint((l - lam) / dx)
+
+      do i = 0, n
+        x = dble(nint(lam)) + dx * dble(i)
+        y = atan(sqrt((yr - l) / (l - x))) 
+
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
+
+      QD = - 2.0d0 / pi * sum
+      F2D = (- 1.0d0 - S / 2.0d0) * (yr - l) - QD
+
+    end function F2_partialD
 
     !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
       !integer, intent(in) :: dn
