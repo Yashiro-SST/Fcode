@@ -36,16 +36,17 @@ program darden
   read(10,*) dn                  !---Division number @ integral
   read(10,*) ite_max             !---Maximum number of iterations
 
+
   close(10)
 
   !---Calculation Known function---!
 
-  beta = sqrt(abs(M_inf**2.0 - 1.0))
+  beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
   a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
   u_inf = M_inf * a_inf
-  k = (gamma + 1) * M_inf**2.0 / sqrt(abs(2.0 * beta**3.0))
+  k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
   S = l / (k * sqrt(abs(h_inf / l)))
-  Ae_l = beta * W /(rho_inf * u_inf**2.0)
+  Ae_l = beta * W /(rho_inf * u_inf**2.0d0)
 
   !---Output---!
 
@@ -67,24 +68,36 @@ program darden
   write(*,*) 'k = ', k
   write(*,*) 's = ', s
   write(*,*) 'Ae_l = ', Ae_l
-  write(*,*) '32.0d0, 32d0 ', 32.0d0, 32d0
+  write(*,*) 'C0 = ', C0
+  write(*,*) 'D0 = ', D0
 
-  dx = l / dble(dn)
-  allocate (x_array(dn))
-  do i = 0, dn
-    x_array(i) = dx * dble(i)
-  enddo
 
   !---Newton method---!
+  err = 1.0d0 * 10d0**(-5d0)
+
   do i = 0, ite_max
+
+    write(*,*) '_________________________'
+
+    write(*,*) 'iteration' , i+1
+    write(*,*) 'C0 = ', C0
+    write(*,*) 'D0 = ', D0
 
     !---Calculation unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
-    lam1 = 32.0d0 * A * (l**2.5) / 15.0 * yf
-    lam2 = 32.0d0 * (C0 - 2.0d0 * A) * (l - yf / 2.0d0) ** 2.5d0 / (15.0 * yf)
-    lam3 = 16.0d0 * (B - 2.0d0 * (C0 - A) / yf) * (l - yf) ** 2.5d0
-    lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / ((8.0d0 * (C0 + D0) ) ** (2.0d0 /3.0d0)))
+    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
+    lam2 = 32d0 * (C0 - 2.0d0 * A) * (l - yf / 2.0d0) ** 2.5d0 / (15d0 * yf)
+    lam3 = 16d0 / 15d0 * (B - 2.0d0 * (C0 - A) / yf) * ((l - yf) ** 2.5d0)
+    lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0))) &
+          ** (2.0d0 / 3.0d0)
+
+    write(*,*) 'A = ', A
+    write(*,*) 'yr = ', yr
+    write(*,*) 'lam1 = ', lam1
+    write(*,*) 'lam2 = ', lam2
+    write(*,*) 'lam3 = ', lam3
+    write(*,*) 'lam = ', lam
 
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
@@ -94,14 +107,20 @@ program darden
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
     F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
 
+    write(*,*) 'F10 = ', F10
+
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
     FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
     FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
     F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
                       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
+
+    write(*,*) 'F1C = ', F1C
     
     F1D = F1_partialD(l, yr, lam, dn)
+
+    write(*,*) 'F1D = ', F1D
 
     Q1 = Qterm1(l, yf, yr, A, dn)
     Q2 = Qterm2(l, yf, yr, A, C0, dn)
@@ -109,38 +128,48 @@ program darden
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
     F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
 
+    write(*,*) 'F20 = ', F20
+
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
     QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
     QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
     F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
+
+    write(*,*) 'F2C = ', F2C
     
     F2D = F2_partialD(l, S, yr, lam, dn)
+    write(*,*) 'F2D = ', F2D
 
     !---calculation delC and delD @ this iteration---!
 
     dC = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
     dD = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
 
+    write(*,*) 'delC =', dC
+    write(*,*) 'delD =', dD
+
     !---Convergence judgment---!
 
-    if (dC < err .and. dD < err) then
+    if (abs(dC) < err .and. abs(dD) < err) then
       write(*,*) 'delD and delC is Converged!!!'
       write(*,*) 'delC =', dC
       write(*,*) 'delD =', dD
       write(*,*) 'Iteration number =', i
 
-    else if (dC >= err .and. dD >= err) then
+    else if (abs(dC) >= err .and. abs(dD) >= err) then
       C0 = C0 + dC
       D0 = D0 + dD
     
-    else if (dC < err .and. dD >= err) then
+    else if (abs(dC) < err .and. abs(dD) >= err) then
       D0 = D0 + dD
     
-    else if (dC >= err .and. dD < err) then
+    else if (abs(dC) >= err .and. abs(dD) < err) then
       C0 = C0 + dC
 
-    else 
+    else
+      write(*,*) 'dC = ', dC
+      write(*,*) 'dD = ', dD
       stop 'something is wrong !!'
     endif
 
@@ -149,7 +178,30 @@ program darden
   C = C0
   D = D0
 
-  !---Culculate Equivalent Area---!
+  write(*,*) 'A = ', A
+  write(*,*) 'yr = ', yr
+  write(*,*) 'lam = ', lam
+  write(*,*) 'C = ', C
+  write(*,*) 'D = ', D
+  
+  !---Calculate F function---!
+
+  x_array(:) = 0.0d0
+  
+  dx = l / dble(dn)
+  allocate (x_array(dn))
+  do i = 0, dn
+    x_array(i) = dx * dble(i)
+  enddo
+
+  do i = 0, dn
+    write (*,*) 'x(i) = ', i, x_array(i)
+  end do
+
+
+  write(*,*) 'x('
+
+  !---Calculate Equivalent Area---!
 
   !Ae_cal(l, A, B, C, D, yf, dn)
 
