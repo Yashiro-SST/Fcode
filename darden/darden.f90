@@ -29,7 +29,7 @@ program darden
 
   read(10,*) mu, B               !---front/rear shock ratio, sig paramata B
   read(10,*) M_inf, h_inf        !---Mach number, Flight height
-  read(10,*) W, l, yf            !---Weight, Effective length
+  read(10,*) W, l, yf            !---Weight, Effective length, nose length
   read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
   read(10,*) gamma, R, AMW       !---Specific heat ratio，Gas constant, Average molecular weight
   read(10,*) C0, D0              !---initial C, D
@@ -87,8 +87,10 @@ program darden
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
     lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 32d0 * (C0 - 2.0d0 * A) * (l - yf / 2.0d0) ** 2.5d0 / (15d0 * yf)
-    lam3 = 16d0 / 15d0 * (B - 2.0d0 * (C0 - A) / yf) * ((l - yf) ** 2.5d0)
+    lam2 = 8.0d0 / 15d0 * ((l - yf / 2.0d0) ** 1.5d0) &
+            * (3.0 * yf / 2.0d0 + (C0 - 2.0d0 * A) * (4.0d0 * l / yf - 5.0d0))
+    lam3 = 16d0 / 15d0 * ((l - yf) ** 1.5d0) & 
+            * (l / yf - 1.0d0) * (2.0d0 * A + B * yf - 2.0d0 * C0)
     lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0))) &
           ** (2.0d0 / 3.0d0)
 
@@ -102,44 +104,56 @@ program darden
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
     FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
+    write(*,*) 'FYR_int1 = ', FYR_int1
     FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
+    write(*,*) 'FYR_int2 = ', FYR_int2
     FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
+    write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
+    write(*,*) 'FYR_int4 = ', FYR_int4
     F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
-
     write(*,*) 'F10 = ', F10
 
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
+    write(*,*) 'FYR_partialC1 = ', FYR_C1
     FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
+    write(*,*) 'FYR_partialC2 = ', FYR_C2
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    write(*,*) 'FYR_partialC3 = ', FYR_C3
     FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
+    write(*,*) 'FYR_partialC4 = ', FYR_C4
     F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
                       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
-
     write(*,*) 'F1C = ', F1C
     
     F1D = F1_partialD(l, yr, lam, dn)
-
     write(*,*) 'F1D = ', F1D
-
+    
     Q1 = Qterm1(l, yf, yr, A, dn)
+    write(*,*) 'Qterm1 = ', Q1
     Q2 = Qterm2(l, yf, yr, A, C0, dn)
+    write(*,*) 'Qterm2 = ', Q2
     Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
+    write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
+    write(*,*) 'Qterm4 = ', Q4
     F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
-
     write(*,*) 'F20 = ', F20
 
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
+    write(*,*) 'QC1 = ', QC1
     QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
+    write(*,*) 'QC2 = ', QC2
     QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    write(*,*) 'QC3 = ', QC3
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
+    write(*,*) 'QC4 = ', QC4
     F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
-
     write(*,*) 'F2C = ', F2C
-    
+
     F2D = F2_partialD(l, S, yr, lam, dn)
     write(*,*) 'F2D = ', F2D
+    
 
     !---calculation delC and delD @ this iteration---!
 
@@ -237,7 +251,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_int1 = sum
+      FYR_int1 = sum * dx
 
     end function FYR_integral1
 
@@ -253,7 +267,7 @@ module daikei_sekibun
       n = nint((yf / 2.0d0) / dx)
 
       do i = 0, n
-        x = dble(nint(yf / 2.0d0)) + dx * dble(i)
+        x = yf / 2.0d0 + dx * dble(i)
         y = sqrt(abs(l - x)) / (yr - x) &
           * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf -2.0d0) )
 
@@ -264,7 +278,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_int2 = sum
+      FYR_int2 = sum * dx
 
     end function FYR_integral2
 
@@ -280,7 +294,7 @@ module daikei_sekibun
       n = nint((lam - yf) / dx)
 
       do i = 0, n
-        x = dble(nint(yf)) + dx * dble(i)
+        x = yf + dx * dble(i)
         y = sqrt(abs(l - x)) * (B * (x - yf) + C0) / (yr - x)
 
         if (i == 0 .or. i ==n) then
@@ -290,7 +304,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_int3 = sum
+      FYR_int3 = sum * dx
 
     end function FYR_integral3
 
@@ -306,8 +320,8 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
-        y = sqrt(abs(l - x)) * (B * (x - yf) + D0) / (yr - x) 
+        x = lam + dx * dble(i)
+        y = sqrt(abs(l - x)) * (B * (x - yf) - D0) / (yr - x) 
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -316,7 +330,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_int4 = sum
+      FYR_int4 = sum * dx
 
     end function FYR_integral4
 
@@ -355,7 +369,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_C1 = sum
+      FYR_C1 = sum * dx
 
     end function FYR_partialC1
 
@@ -371,7 +385,7 @@ module daikei_sekibun
       n = nint((yf / 2.0d0) / dx)
 
       do i = 0, n
-        x = dble(nint(yf / 2.0d0)) + dx * dble(i)
+        x = (yf / 2.0d0) + dx * dble(i)
         y = - sqrt(abs(l - x)) / (yr - x) * (1.0d0 / (S * mu * (yr - x)) &
             * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf - 2.0d0)) &
             + (2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.50d0) &
@@ -384,7 +398,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_C2 = sum
+      FYR_C2 = sum * dx
 
     end function FYR_partialC2
 
@@ -400,7 +414,7 @@ module daikei_sekibun
       n = nint((lam - yf) / dx)
 
       do i = 0, n
-        x = dble(nint(yf)) + dx * dble(i)
+        x = yf + dx * dble(i)
         y = - sqrt(abs(l - x)) / (yr - x) * ((B * (x - yf) + C0) &
             / (S * mu * (yr - x)) + 1.0d0)
 
@@ -411,7 +425,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_C3 = sum
+      FYR_C3 = sum * dx
 
     end function FYR_partialC3
 
@@ -427,8 +441,8 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
-        y = sqrt(abs(l - x)) / (S * mu * (yr - x)**2.0d0) * (B * (x - yf) + D0)  
+        x = lam + dx * dble(i)
+        y = sqrt(abs(l - x)) / (S * mu * (yr - x)**2.0d0) * (B * (x - yf) - D0)  
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -437,7 +451,7 @@ module daikei_sekibun
         end if
       enddo
 
-      FYR_C4 = sum
+      FYR_C4 = sum * dx
 
     end function FYR_partialC4
 
@@ -468,8 +482,8 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
-        y = sqrt(abs(l - x)) / (yr - x) 
+        x = lam + dx * dble(i)
+        y = - sqrt(abs(l - x)) / (yr - x) 
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -478,7 +492,7 @@ module daikei_sekibun
         end if
       enddo
 
-      F1D = - 1.0d0 - sum
+      F1D = - 1.0d0 - sum * dx
 
     end function F1_partialD
 
@@ -506,7 +520,7 @@ module daikei_sekibun
         end if
       enddo
 
-      Q1 = - 2.0d0 / pi * sum
+      Q1 = - 2.0d0 / pi * sum * dx
 
     end function Qterm1
 
@@ -523,7 +537,7 @@ module daikei_sekibun
       n = nint((yf / 2.0d0) / dx)
 
       do i = 0, n
-        x = dble(nint(yf / 2.0d0)) + dx * dble(i)
+        x = (yf / 2.0d0) + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
         y = (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf -2.0d0) ) * t
 
@@ -534,7 +548,7 @@ module daikei_sekibun
         end if
       enddo
 
-      Q2 = - 2.0d0 / pi * sum
+      Q2 = - 2.0d0 / pi * sum * dx
 
     end function Qterm2
 
@@ -551,7 +565,7 @@ module daikei_sekibun
       n = nint((lam - yf) / dx)
 
       do i = 0, n
-        x = dble(nint(yf)) + dx * dble(i)
+        x = yf + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
         y = (B * (x - yf) + C0) * t
 
@@ -562,7 +576,7 @@ module daikei_sekibun
         end if
       enddo
 
-      Q3 = - 2.0d0 / pi * sum
+      Q3 = - 2.0d0 / pi * sum * dx
 
     end function Qterm3
 
@@ -579,18 +593,18 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
+        x = lam + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
-        y = (B * (x - yf) + D0) * t
+        y = (B * (x - yf) - D0) * t
 
-        if (i == 0 .or. i ==n) then
+        if (i == 0 .or. i == n) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
         end if
       enddo
 
-      Q4 = - 2.0d0 / pi * sum
+      Q4 = - 2.0d0 / pi * sum * dx
 
     end function Qterm4
 
@@ -628,7 +642,7 @@ module daikei_sekibun
         end if
       enddo
 
-      QC1 = - 2.0d0 / pi * sum
+      QC1 = - 2.0d0 / pi * sum * dx
 
     end function Q_partialC1
 
@@ -658,7 +672,7 @@ module daikei_sekibun
         end if
       enddo
 
-      QC2 = - 2.0d0 / pi * sum
+      QC2 = - 2.0d0 / pi * sum * dx
 
     end function Q_partialC2
 
@@ -674,19 +688,19 @@ module daikei_sekibun
       n = nint((lam - yf) / dx)
 
       do i = 0, n
-        x = dble(nint(yf)) + dx * dble(i)
+        x = yf + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
         tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
         y = t + (B * (x - yf) + C0) * tc
         
-        if (i == 0 .or. i ==n) then
+        if (i == 0 .or. i == n) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
         end if
       enddo
 
-      QC3 = - 2.0d0 / pi * sum
+      QC3 = - 2.0d0 / pi * sum * dx
 
     end function Q_partialC3
 
@@ -702,18 +716,18 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
+        x = lam + dx * dble(i)
         tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
-        y = (B * (x - yf) + D0) * tc
+        y = (B * (x - yf) - D0) * tc
 
-        if (i == 0 .or. i ==n) then
+        if (i == 0 .or. i == n) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
         end if
       enddo
 
-      QC4 = - 2.0d0 / pi * sum
+      QC4 = - 2.0d0 / pi * sum * dx
 
     end function Q_partialC4
 
@@ -741,17 +755,17 @@ module daikei_sekibun
       n = nint((l - lam) / dx)
 
       do i = 0, n
-        x = dble(nint(lam)) + dx * dble(i)
+        x = lam + dx * dble(i)
         y = atan(sqrt((yr - l) / (l - x))) 
 
-        if (i == 0 .or. i ==n) then
+        if (i == 0 .or. i == n) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
         end if
       enddo
 
-      QD = - 2.0d0 / pi * sum
+      QD = 2.0d0 / pi * sum * dx
       F2D = (- 1.0d0 - S / 2.0d0) * (yr - l) - QD
 
     end function F2_partialD
