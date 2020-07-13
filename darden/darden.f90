@@ -592,12 +592,12 @@ module daikei_sekibun
       sum = 0.0d0
       n = nint((l - lam) / dx)
 
-      do i = 0, n
+      do i = 0, n-1
         x = lam + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
         y = (B * (x - yf) - D0) * t
 
-        if (i == 0 .or. i == n) then
+        if (i == 0 .or. i == n-1) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
@@ -715,12 +715,12 @@ module daikei_sekibun
       sum = 0.0d0
       n = nint((l - lam) / dx)
 
-      do i = 0, n
+      do i = 0, n-1
         x = lam + dx * dble(i)
         tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
         y = (B * (x - yf) - D0) * tc
 
-        if (i == 0 .or. i == n) then
+        if (i == 0 .or. i == n-1) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
@@ -754,11 +754,11 @@ module daikei_sekibun
       sum = 0.0d0
       n = nint((l - lam) / dx)
 
-      do i = 0, n
+      do i = 0, n-1
         x = lam + dx * dble(i)
         y = atan(sqrt((yr - l) / (l - x))) 
 
-        if (i == 0 .or. i == n) then
+        if (i == 0 .or. i == n-1) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
