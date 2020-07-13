@@ -5,4 +5,4 @@
 1.403d0 8.314462d0 28.966d0   !--Specific heat ratio，Gas constant, Average molecular weight
 1.2d0 2.0d0                   !--initial C0, D0
 10000                         !--Division number (from zero to l)
-10                            !--Maximum number of iterations
+50                            !--Maximum number of iterations
