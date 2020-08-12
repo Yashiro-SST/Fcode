@@ -77,7 +77,7 @@ program darden
 
   do i = 0, ite_max
 
-    write(*,*) '_________________________'
+    write(*,*) '_____________________________'
 
     write(*,*) 'iteration' , i+1
     write(*,*) 'C0 = ', C0
