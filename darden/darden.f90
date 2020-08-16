@@ -86,13 +86,10 @@ program darden
     !---Calculation unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
-    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 8.0d0 / 15d0 * ((l - yf / 2.0d0) ** 1.5d0) &
-            * (3.0 * yf / 2.0d0 + (C0 - 2.0d0 * A) * (4.0d0 * l / yf - 5.0d0))
-    lam3 = 16d0 / 15d0 * ((l - yf) ** 1.5d0) & 
-            * (l / yf - 1.0d0) * (2.0d0 * A + B * yf - 2.0d0 * C0)
-    lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0))) &
-          ** (2.0d0 / 3.0d0)
+    lam1 = 32d0 * A * (l**2.5d0) / (15d0 * yf)
+    lam2 = 32d0 * ((l - yf / 2.0d0)**2.5d0) * (C - 2.0d0 * A)/ (15d0 * yf)
+    lam3 = 16d0 * ((l - yf)**2.5d0) * (2.0d0 * A + B * yf - 2.0d0 * C) / (15d0 * yf)
+    lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0)))**(2.0d0 / 3.0d0)
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
