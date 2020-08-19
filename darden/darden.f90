@@ -21,7 +21,7 @@ program darden
   real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
   real(8) Q1, Q2, Q3, Q4
   real(8) QC1, QC2, QC3, QC4
-  real(8), allocatable :: x_array(:), F(:), Ae(:)
+  real(8), allocatable :: x(:), F(:), Ae(:)
   integer dn, i, ite_max
 
   !---Reading paramator---!
@@ -35,7 +35,6 @@ program darden
   read(10,*) C0, D0              !---initial C, D
   read(10,*) dn                  !---Division number @ integral
   read(10,*) ite_max             !---Maximum number of iterations
-
 
   close(10)
 
@@ -86,10 +85,17 @@ program darden
     !---Calculation unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
+<<<<<<< HEAD
     lam1 = 32d0 * A * (l**2.5d0) / (15d0 * yf)
     lam2 = 32d0 * ((l - yf / 2.0d0)**2.5d0) * (C - 2.0d0 * A)/ (15d0 * yf)
     lam3 = 16d0 * ((l - yf)**2.5d0) * (2.0d0 * A + B * yf - 2.0d0 * C) / (15d0 * yf)
     lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0)))**(2.0d0 / 3.0d0)
+=======
+    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
+    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - yf / 2.0d0) ** 2.5d0) / (15d0 * yf)
+    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
+    lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
+>>>>>>> 9a66c821e5edd418ff17236e1a0ef2f03f7f76e4
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
@@ -167,6 +173,7 @@ program darden
       write(*,*) 'delC =', dC
       write(*,*) 'delD =', dD
       write(*,*) 'Iteration number =', i
+      stop
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
       C0 = C0 + dC
@@ -197,20 +204,38 @@ program darden
   
   !---Calculate F function---!
 
-  x_array(:) = 0.0d0
+  open(20, file = 'F_function.txt')
+
+  x(:) = 0.0d0
+  F(:) = 0.0d0
   
   dx = l / dble(dn)
-  allocate (x_array(dn))
+  allocate (x(dn))
+
   do i = 0, dn
-    x_array(i) = dx * dble(i)
+    x(i) = dx * dble(i)
+
+    if(x(i) <= (yf / 2.0d0)) then
+      F(i) = 2.0d0 * x(i) * A / yf
+    
+    else if((yf / 2.0d0) < x(i) .and. x(i) < yf ) then
+      F(i) = C * (2.0d0 * x(i) / yf - 1.0d0) - A * (2.0d0 * x(i) / yf - 2.0d0)
+
+    else if(yf <= x(i) .and. x(i) < lam) then 
+      F(i) = B * (x(i) - yf) + C
+
+    else if(lam <= x(i) .and. x(i) < l) then
+      F(i) = B * (x(i) - yf) - D
+    end if
+
   enddo
 
+  write (20,*) 'i,   x(i),   F(i)'
   do i = 0, dn
-    write (*,*) 'x(i) = ', i, x_array(i)
+    write (20,*) i, x(i), F(i)
   end do
 
-
-  write(*,*) 'x('
+  close(20)
 
   !---Calculate Equivalent Area---!
 
@@ -776,5 +801,62 @@ module daikei_sekibun
 
     !end function Ae_cal
 
-
 end module daikei_sekibun
+
+
+module Ffunc
+  implicit none
+  contains
+
+    function cal_Ffunc(x(:), l, A, B, C, D, yf, dn) result(F(:))
+      real(8), intent(in) :: x(:)
+      real(8), intent(in) :: l, A, B, C, D, yf 
+      integer, intent(in) :: dn
+      real(8) F(:)
+      integer i
+
+      F(:) = 0.0d0
+      dx = l / dble(dn)
+      allocate (x(dn))
+    
+      do i = 0, dn
+        x(i) = dx * dble(i)
+    
+        if(x(i) <= (yf / 2.0d0)) then
+          F(i) = 2.0d0 * x(i) * A / yf
+        
+        else if((yf / 2.0d0) < x(i) .and. x(i) < yf ) then
+          F(i) = C * (2.0d0 * x(i) / yf - 1.0d0) - A * (2.0d0 * x(i) / yf - 2.0d0)
+    
+        else if(yf <= x(i) .and. x(i) < lam) then 
+          F(i) = B * (x(i) - yf) + C
+    
+        else if(lam <= x(i) .and. x(i) < l) then
+          F(i) = B * (x(i) - yf) - D
+        end if
+    
+      enddo
+
+    end function cal_Ffunc
+
+
+    function output_Ffunc(x(:), F(:), l, dn)
+
+      real(8), intent(in) :: x(:), F(:)
+      real(8), intent(in) :: l, 
+      integer, intent(in) :: dn
+      real(8) F(:)
+      integer i, n
+
+      write (20,*) 'i,   x(i),   F(i)'
+      do i = 0, dn
+        write (20,*) i, x(i), F(i)
+      end do
+
+      close(20)
+
+    end function output_Ffunc
+
+
+
+end module Ffunc
