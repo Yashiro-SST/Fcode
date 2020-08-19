@@ -5,6 +5,7 @@
 !=======================================================================!
 program darden
   use daikei_sekibun
+  use Ffunc
   implicit none
 
   !---Variable definition---!
@@ -85,17 +86,10 @@ program darden
     !---Calculation unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
-<<<<<<< HEAD
-    lam1 = 32d0 * A * (l**2.5d0) / (15d0 * yf)
-    lam2 = 32d0 * ((l - yf / 2.0d0)**2.5d0) * (C - 2.0d0 * A)/ (15d0 * yf)
-    lam3 = 16d0 * ((l - yf)**2.5d0) * (2.0d0 * A + B * yf - 2.0d0 * C) / (15d0 * yf)
-    lam = l - (3.0d0 * ( lam1 + lam2 + lam3 - Ae_l  ) / (8.0d0 * (C0 + D0)))**(2.0d0 / 3.0d0)
-=======
     lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
     lam2 = 32d0 * (C - 2.0d0 * A) * ((l - yf / 2.0d0) ** 2.5d0) / (15d0 * yf)
     lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
     lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
->>>>>>> 9a66c821e5edd418ff17236e1a0ef2f03f7f76e4
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
@@ -173,7 +167,6 @@ program darden
       write(*,*) 'delC =', dC
       write(*,*) 'delD =', dD
       write(*,*) 'Iteration number =', i
-      stop
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
       C0 = C0 + dC
@@ -203,37 +196,25 @@ program darden
   write(*,*) 'D = ', D
   
   !---Calculate F function---!
-
-  open(20, file = 'F_function.txt')
+  allocate (x(dn))
+  allocate (F(dn))
+  allocate (Ae(dn))
 
   x(:) = 0.0d0
-  F(:) = 0.0d0
-  
   dx = l / dble(dn)
-  allocate (x(dn))
-
   do i = 0, dn
     x(i) = dx * dble(i)
 
-    if(x(i) <= (yf / 2.0d0)) then
-      F(i) = 2.0d0 * x(i) * A / yf
-    
-    else if((yf / 2.0d0) < x(i) .and. x(i) < yf ) then
-      F(i) = C * (2.0d0 * x(i) / yf - 1.0d0) - A * (2.0d0 * x(i) / yf - 2.0d0)
-
-    else if(yf <= x(i) .and. x(i) < lam) then 
-      F(i) = B * (x(i) - yf) + C
-
-    else if(lam <= x(i) .and. x(i) < l) then
-      F(i) = B * (x(i) - yf) - D
-    end if
-
   enddo
 
-  write (20,*) 'i,   x(i),   F(i)'
-  do i = 0, dn
-    write (20,*) i, x(i), F(i)
-  end do
+  F(:) = cal_Ffunc(x, l, A, B, C, D, yf, lam, dn)
+
+  open(20, file='Darden Ffunc.txt')
+
+      write (20,*) 'i,   x(i),   F(i)'
+      do i = 0, dn
+        write (20,*) i, x(i), F(i)
+      end do
 
   close(20)
 
@@ -795,7 +776,7 @@ module daikei_sekibun
     !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
       !integer, intent(in) :: dn
       !real(8), intent(in) :: l, A, B, C, D, yf
-      !real(8) Ae(n)
+      !real(8) Ae(dn)
 
       !dy = 0.0d0
 
@@ -808,20 +789,17 @@ module Ffunc
   implicit none
   contains
 
-    function cal_Ffunc(x(:), l, A, B, C, D, yf, dn) result(F(:))
-      real(8), intent(in) :: x(:)
-      real(8), intent(in) :: l, A, B, C, D, yf 
+    function cal_Ffunc(x, l, A, B, C, D, yf, lam, dn) result(F)
       integer, intent(in) :: dn
-      real(8) F(:)
+      real(8), intent(in) :: x(dn)
+      real(8), intent(in) :: l, A, B, C, D, yf, lam 
+      real(8) F(dn), dx
       integer i
 
       F(:) = 0.0d0
       dx = l / dble(dn)
-      allocate (x(dn))
     
-      do i = 0, dn
-        x(i) = dx * dble(i)
-    
+      do i = 0, dn+1
         if(x(i) <= (yf / 2.0d0)) then
           F(i) = 2.0d0 * x(i) * A / yf
         
@@ -839,24 +817,22 @@ module Ffunc
 
     end function cal_Ffunc
 
-
-    function output_Ffunc(x(:), F(:), l, dn)
-
-      real(8), intent(in) :: x(:), F(:)
-      real(8), intent(in) :: l, 
-      integer, intent(in) :: dn
-      real(8) F(:)
-      integer i, n
-
-      write (20,*) 'i,   x(i),   F(i)'
-      do i = 0, dn
-        write (20,*) i, x(i), F(i)
-      end do
-
-      close(20)
-
-    end function output_Ffunc
-
-
-
 end module Ffunc
+
+!module Ae
+  !implicit none
+  !contains
+  
+    !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
+      !integer, intent(in) :: dn
+      !real(8), intent(in) :: l, A, B, C, D, yf
+      !real(8) Ae(dn)
+
+      !dy = 0.0d0
+
+    !end function Ae_cal
+
+    !function output_Ae
+    !end function output_Ae
+
+!end module Ae
