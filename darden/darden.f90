@@ -198,7 +198,6 @@ program darden
   !---Calculate F function---!
   allocate (x(dn))
   allocate (F(dn))
-  allocate (Ae(dn))
 
   x(:) = 0.0d0
   dx = l / dble(dn)
@@ -220,7 +219,18 @@ program darden
 
   !---Calculate Equivalent Area---!
 
-  !Ae_cal(l, A, B, C, D, yf, dn)
+  allocate (Ae(dn))
+
+  Ae(:) = cal_Ae()
+
+  open(30, file='Equivalent Area Destribution.txt')
+
+      write (30,*) 'i,   x(i),   Ae(i)'
+      do i = 0, dn
+        write (30,*) i, x(i), Ae(i)
+      end do
+
+  close(30)
 
 end program darden
 
@@ -794,7 +804,7 @@ module Ffunc
       real(8), intent(in) :: x(dn)
       real(8), intent(in) :: l, A, B, C, D, yf, lam 
       real(8) F(dn), dx
-      integer i
+      integer i, j
 
       F(:) = 0.0d0
       dx = l / dble(dn)
@@ -812,27 +822,38 @@ module Ffunc
         else if(lam <= x(i) .and. x(i) < l) then
           F(i) = B * (x(i) - yf) - D
         end if
-    
       enddo
 
     end function cal_Ffunc
 
 end module Ffunc
 
-!module Ae
-  !implicit none
-  !contains
+module Ae
+  implicit none
+  contains
   
-    !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
-      !integer, intent(in) :: dn
-      !real(8), intent(in) :: l, A, B, C, D, yf
-      !real(8) Ae(dn)
+    function Ae_cal(x, F, l, dn) Result(Ae)
+      integer, intent(in) :: dn
+      real(8), intent(in) :: x(dn), F(dn)
+      real(8), intent(in) :: l
+      real(8) Ae(dn), dx
+      integer i
 
-      !dy = 0.0d0
+      A(:) = 0.0
+      dx = l / dble(dn)
 
-    !end function Ae_cal
+      do i = 0, dn+1
+        do j = 0, dn+1
+          
+        enddo
 
-    !function output_Ae
-    !end function output_Ae
+      end do
 
-!end module Ae
+
+    end function Ae_cal
+
+    function output_Ae
+
+    end function output_Ae
+
+end module Ae
