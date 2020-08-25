@@ -6,6 +6,7 @@
 program darden
   use daikei_sekibun
   use Ffunc
+  use Ae_calculation
   implicit none
 
   !---Variable definition---!
@@ -73,7 +74,7 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-5d0)
+  err = 1.0d0 * 10d0**(-4d0)
 
   do i = 0, ite_max
 
@@ -163,10 +164,12 @@ program darden
     !---Convergence judgment---!
 
     if (abs(dC) < err .and. abs(dD) < err) then
+      write(*,*) ' '
       write(*,*) 'delD and delC is Converged!!!'
       write(*,*) 'delC =', dC
       write(*,*) 'delD =', dD
       write(*,*) 'Iteration number =', i
+      exit
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
       C0 = C0 + dC
@@ -212,25 +215,27 @@ program darden
 
       write (20,*) 'i,   x(i),   F(i)'
       do i = 0, dn
-        write (20,*) i, x(i), F(i)
+        write (20,*)i, x(i), F(i)
       end do
 
   close(20)
+  write(*,*) 'output Ffunc is completed !'
 
   !---Calculate Equivalent Area---!
-
   allocate (Ae(dn))
 
-  Ae(:) = cal_Ae()
+  Ae(:) = Ae_cal(x, F, l, dn)
 
   open(30, file='Equivalent Area Destribution.txt')
 
       write (30,*) 'i,   x(i),   Ae(i)'
       do i = 0, dn
-        write (30,*) i, x(i), Ae(i)
+        write (30,*)i, x(i), Ae(i)
       end do
 
   close(30)
+  write(*,*) 'output Ae is completed !'
+  write(*,*) ' '
 
 end program darden
 
@@ -783,15 +788,6 @@ module daikei_sekibun
 
     end function F2_partialD
 
-    !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
-      !integer, intent(in) :: dn
-      !real(8), intent(in) :: l, A, B, C, D, yf
-      !real(8) Ae(dn)
-
-      !dy = 0.0d0
-
-    !end function Ae_cal
-
 end module daikei_sekibun
 
 
@@ -804,7 +800,7 @@ module Ffunc
       real(8), intent(in) :: x(dn)
       real(8), intent(in) :: l, A, B, C, D, yf, lam 
       real(8) F(dn), dx
-      integer i, j
+      integer i
 
       F(:) = 0.0d0
       dx = l / dble(dn)
@@ -828,7 +824,7 @@ module Ffunc
 
 end module Ffunc
 
-module Ae
+module Ae_calculation
   implicit none
   contains
   
@@ -836,24 +832,28 @@ module Ae
       integer, intent(in) :: dn
       real(8), intent(in) :: x(dn), F(dn)
       real(8), intent(in) :: l
-      real(8) Ae(dn), dx
-      integer i
+      real(8) Ae(dn), y, z, dy, sum
+      integer i, j
 
-      A(:) = 0.0
-      dx = l / dble(dn)
+      Ae(:) = 0.0
+      dy = l / dble(dn)
+      sum = 0.0d0
 
       do i = 0, dn+1
-        do j = 0, dn+1
-          
-        enddo
+        do j = 0, i
+          y = dy * dble(j)
+          z = F(j) * sqrt(x(i)-y)
 
-      end do
+          if (j == 0 .or. j ==i) then
+            sum = sum + 0.5d0 * z
+          else
+            sum = sum + z
+          end if
+        end do
 
+        Ae(i) = 4 * sum * dy
+      enddo
 
     end function Ae_cal
 
-    function output_Ae
-
-    end function output_Ae
-
-end module Ae
+end module Ae_calculation
