@@ -166,13 +166,7 @@ program darden
     if (abs(dC) < err .and. abs(dD) < err) then
       write(*,*) ' '
       write(*,*) 'delD and delC is Converged!!!'
-<<<<<<< HEAD
-      write(*,*) 'Iteration number =', i+1
-=======
-      !write(*,*) 'delC =', dC
-      !write(*,*) 'delD =', dD
       write(*,*) 'Iteration number =', i
->>>>>>> 65dbd66feebc0af09719fa153a62716cc99dc7b2
       exit
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
