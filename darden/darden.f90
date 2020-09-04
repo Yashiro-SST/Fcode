@@ -47,7 +47,7 @@ program darden
   u_inf = M_inf * a_inf
   k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
   S = l / (k * sqrt(abs(h_inf / l)))
-  Ae_l = beta * W /(rho_inf * u_inf**2.0d0)
+  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)
 
   !---Output---!
 
@@ -94,9 +94,9 @@ program darden
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
-    !write(*,*) 'lam1 = ', lam1
-    !write(*,*) 'lam2 = ', lam2
-    !write(*,*) 'lam3 = ', lam3
+    write(*,*) 'lam1 = ', lam1
+    write(*,*) 'lam2 = ', lam2
+    write(*,*) 'lam3 = ', lam3
     write(*,*) 'lam = ', lam
 
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
@@ -192,6 +192,8 @@ program darden
   C = C0
   D = D0
 
+  !---output parameter for cal_Ffunction---!
+
   write(*,*) 'mu = ', mu
   write(*,*) 'B = ', B
   write(*,*) 'M = ', M_inf
@@ -216,6 +218,17 @@ program darden
   write(*,*) 'lam = ', lam
   write(*,*) 'C = ', C
   write(*,*) 'D = ', D
+
+  open(20, file='F function parameter.txt')
+  write(20,*) l
+  write(20,*) A
+  write(20,*) B
+  write(20,*) C
+  write(20,*) D
+  write(20,*) yf
+  write(20,*) lam
+  write(20,*) dn
+  close(20)
   
   !---Calculate F function---!
   allocate (x(dn))
@@ -230,14 +243,14 @@ program darden
 
   F(:) = cal_Ffunc(x, l, A, B, C, D, yf, lam, dn)
 
-  open(20, file='Darden Ffunc.txt')
+  open(30, file='Darden Ffunc.txt')
 
-      write (20,*) 'i,   x(i),   F(i)'
+      write (30,*) 'i,   x(i),   F(i)'
       do i = 0, dn
-        write (20,*)i, x(i), F(i)
+        write (30,*)i, x(i), F(i)
       end do
 
-  close(20)
+  close(30)
   write(*,*) 'output Ffunc is completed !'
 
   !---Calculate Equivalent Area---!
@@ -245,14 +258,14 @@ program darden
 
   Ae(:) = Ae_cal(x, F, l, dn)
 
-  open(30, file='Equivalent Area Destribution.txt')
+  open(40, file='Equivalent Area Destribution.txt')
 
-      write (30,*) 'i,   x(i),   Ae(i)'
+      write (40,*) 'i,   x(i),   Ae(i)'
       do i = 0, dn
-        write (30,*)i, x(i), Ae(i)
+        write (40,*)i, x(i), Ae(i)
       end do
 
-  close(30)
+  close(40)
   write(*,*) 'output Ae is completed !'
   write(*,*) ' '
 
