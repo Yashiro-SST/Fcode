@@ -6,6 +6,7 @@
 program darden
   use daikei_sekibun
   use Ffunc
+  use Ae_calculation
   implicit none
 
   !---Variable definition---!
@@ -46,7 +47,7 @@ program darden
   u_inf = M_inf * a_inf
   k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
   S = l / (k * sqrt(abs(h_inf / l)))
-  Ae_l = beta * W /(rho_inf * u_inf**2.0d0)
+  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)
 
   !---Output---!
 
@@ -73,7 +74,7 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-5d0)
+  err = 1.0d0 * 10d0**(-4d0)
 
   do i = 0, ite_max
 
@@ -101,55 +102,55 @@ program darden
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
     FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
-    write(*,*) 'FYR_int1 = ', FYR_int1
+    !write(*,*) 'FYR_int1 = ', FYR_int1
     FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
-    write(*,*) 'FYR_int2 = ', FYR_int2
+    !write(*,*) 'FYR_int2 = ', FYR_int2
     FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
-    write(*,*) 'FYR_int3 = ', FYR_int3
+    !write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
-    write(*,*) 'FYR_int4 = ', FYR_int4
+    !write(*,*) 'FYR_int4 = ', FYR_int4
     F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
-    write(*,*) 'F10 = ', F10
+    !write(*,*) 'F10 = ', F10
 
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
-    write(*,*) 'FYR_partialC1 = ', FYR_C1
+    !write(*,*) 'FYR_partialC1 = ', FYR_C1
     FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
-    write(*,*) 'FYR_partialC2 = ', FYR_C2
+    !write(*,*) 'FYR_partialC2 = ', FYR_C2
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    write(*,*) 'FYR_partialC3 = ', FYR_C3
+    !write(*,*) 'FYR_partialC3 = ', FYR_C3
     FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
-    write(*,*) 'FYR_partialC4 = ', FYR_C4
+    !write(*,*) 'FYR_partialC4 = ', FYR_C4
     F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
                       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
-    write(*,*) 'F1C = ', F1C
+    !write(*,*) 'F1C = ', F1C
     
     F1D = F1_partialD(l, yr, lam, dn)
-    write(*,*) 'F1D = ', F1D
+    !write(*,*) 'F1D = ', F1D
     
     Q1 = Qterm1(l, yf, yr, A, dn)
-    write(*,*) 'Qterm1 = ', Q1
+    !write(*,*) 'Qterm1 = ', Q1
     Q2 = Qterm2(l, yf, yr, A, C0, dn)
-    write(*,*) 'Qterm2 = ', Q2
+    !write(*,*) 'Qterm2 = ', Q2
     Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
-    write(*,*) 'Qterm3 = ', Q3
+    !write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
-    write(*,*) 'Qterm4 = ', Q4
+    !write(*,*) 'Qterm4 = ', Q4
     F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
-    write(*,*) 'F20 = ', F20
+    !write(*,*) 'F20 = ', F20
 
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
-    write(*,*) 'QC1 = ', QC1
+    !write(*,*) 'QC1 = ', QC1
     QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
-    write(*,*) 'QC2 = ', QC2
+    !write(*,*) 'QC2 = ', QC2
     QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    write(*,*) 'QC3 = ', QC3
+    !write(*,*) 'QC3 = ', QC3
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
-    write(*,*) 'QC4 = ', QC4
+    !write(*,*) 'QC4 = ', QC4
     F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
-    write(*,*) 'F2C = ', F2C
+    !write(*,*) 'F2C = ', F2C
 
     F2D = F2_partialD(l, S, yr, lam, dn)
-    write(*,*) 'F2D = ', F2D
+    !write(*,*) 'F2D = ', F2D
     
 
     !---calculation delC and delD @ this iteration---!
@@ -163,8 +164,15 @@ program darden
     !---Convergence judgment---!
 
     if (abs(dC) < err .and. abs(dD) < err) then
+      write(*,*) ' '
       write(*,*) 'delD and delC is Converged!!!'
+<<<<<<< HEAD
       write(*,*) 'Iteration number =', i+1
+=======
+      !write(*,*) 'delC =', dC
+      !write(*,*) 'delD =', dD
+      write(*,*) 'Iteration number =', i
+>>>>>>> 65dbd66feebc0af09719fa153a62716cc99dc7b2
       exit
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
@@ -188,16 +196,47 @@ program darden
   C = C0
   D = D0
 
+  !---output parameter for cal_Ffunction---!
+
+  write(*,*) 'mu = ', mu
+  write(*,*) 'B = ', B
+  write(*,*) 'M = ', M_inf
+  write(*,*) 'h = ', h_inf
+  write(*,*) 'W = ', W
+  write(*,*) 'l = ', l
+  write(*,*) 'yf = ', yf
+  write(*,*) 'rho = ', rho_inf
+  write(*,*) 'T = ', T_inf
+  write(*,*) 'gamma = ', gamma
+  write(*,*) 'R = ', R
+  write(*,*) 'AMW = ', AMW
+  write(*,*) 'beta = ', beta
+  write(*,*) 'a_inf = ', a_inf
+  write(*,*) 'u_inf = ', u_inf
+  write(*,*) 'k = ', k
+  write(*,*) 's = ', s
+  write(*,*) 'Ae_l = ', Ae_l
+
   write(*,*) 'A = ', A
   write(*,*) 'yr = ', yr
   write(*,*) 'lam = ', lam
   write(*,*) 'C = ', C
   write(*,*) 'D = ', D
+
+  open(20, file='F function parameter.txt')
+  write(20,*) l
+  write(20,*) A
+  write(20,*) B
+  write(20,*) C
+  write(20,*) D
+  write(20,*) yf
+  write(20,*) lam
+  write(20,*) dn
+  close(20)
   
   !---Calculate F function---!
   allocate (x(dn))
   allocate (F(dn))
-  allocate (Ae(dn))
 
   x(:) = 0.0d0
   dx = l / dble(dn)
@@ -208,20 +247,33 @@ program darden
 
   F(:) = cal_Ffunc(x, l, A, B, C, D, yf, lam, dn)
 
-  open(20, file='Darden Ffunc.txt')
+  open(30, file='Darden Ffunc.txt')
 
-      write (20,*) 'i,   x(i),   F(i)'
+      write (30,*) 'i,   x(i),   F(i)'
       do i = 0, dn
-        write (20,*) i, x(i), F(i)
+        write (30,*)i, x(i), F(i)
       end do
 
-  close(20)
+  close(30)
+  write(*,*) 'output Ffunc is completed !'
 
   write(*,*)'Ffunction culculation and output finished!'
 
   !---Calculate Equivalent Area---!
+  allocate (Ae(dn))
 
-  !Ae_cal(l, A, B, C, D, yf, dn)
+  Ae(:) = Ae_cal(x, F, l, dn)
+
+  open(40, file='Equivalent Area Destribution.txt')
+
+      write (40,*) 'i,   x(i),   Ae(i)'
+      do i = 0, dn
+        write (40,*)i, x(i), Ae(i)
+      end do
+
+  close(40)
+  write(*,*) 'output Ae is completed !'
+  write(*,*) ' '
 
 end program darden
 
@@ -774,15 +826,6 @@ module daikei_sekibun
 
     end function F2_partialD
 
-    !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
-      !integer, intent(in) :: dn
-      !real(8), intent(in) :: l, A, B, C, D, yf
-      !real(8) Ae(dn)
-
-      !dy = 0.0d0
-
-    !end function Ae_cal
-
 end module daikei_sekibun
 
 
@@ -813,27 +856,42 @@ module Ffunc
         else if(lam <= x(i) .and. x(i) < l) then
           F(i) = B * (x(i) - yf) - D
         end if
-    
       enddo
 
     end function cal_Ffunc
 
 end module Ffunc
 
-!module Ae
-  !implicit none
-  !contains
+module Ae_calculation
+  implicit none
+  contains
   
-    !function Ae_cal(l, A, B, C, D, yf, dn) Result(Ae)
-      !integer, intent(in) :: dn
-      !real(8), intent(in) :: l, A, B, C, D, yf
-      !real(8) Ae(dn)
+    function Ae_cal(x, F, l, dn) Result(Ae)
+      integer, intent(in) :: dn
+      real(8), intent(in) :: x(dn), F(dn)
+      real(8), intent(in) :: l
+      real(8) Ae(dn), y, z, dy, sum
+      integer i, j
 
-      !dy = 0.0d0
+      Ae(:) = 0.0
+      dy = l / dble(dn)
+      sum = 0.0d0
 
-    !end function Ae_cal
+      do i = 0, dn+1
+        do j = 0, i
+          y = dy * dble(j)
+          z = F(j) * sqrt(x(i)-y)
 
-    !function output_Ae
-    !end function output_Ae
+          if (j == 0 .or. j ==i) then
+            sum = sum + 0.5d0 * z
+          else
+            sum = sum + z
+          end if
+        end do
 
-!end module Ae
+        Ae(i) = 4 * sum * dy
+      enddo
+
+    end function Ae_cal
+
+end module Ae_calculation
