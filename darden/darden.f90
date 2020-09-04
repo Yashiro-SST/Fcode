@@ -164,9 +164,8 @@ program darden
 
     if (abs(dC) < err .and. abs(dD) < err) then
       write(*,*) 'delD and delC is Converged!!!'
-      write(*,*) 'delC =', dC
-      write(*,*) 'delD =', dD
-      write(*,*) 'Iteration number =', i
+      write(*,*) 'Iteration number =', i+1
+      exit
 
     else if (abs(dC) >= err .and. abs(dD) >= err) then
       C0 = C0 + dC
@@ -217,6 +216,8 @@ program darden
       end do
 
   close(20)
+
+  write(*,*)'Ffunction culculation and output finished!'
 
   !---Calculate Equivalent Area---!
 
