@@ -218,14 +218,24 @@ program darden
   write(*,*) 'D = ', D
 
   open(20, file='F function parameter.txt')
-  write(20,*) l
-  write(20,*) A
-  write(20,*) B
-  write(20,*) C
-  write(20,*) D
-  write(20,*) yf
-  write(20,*) lam
-  write(20,*) dn
+
+  write(20,'(f16.10)', advance = 'no') l
+  write(20,*) '  !---Length---!'
+  write(20,'(f16.10)', advance = 'no') A
+  write(20,*) '  !---paramater A---!'
+  write(20,'(f16.10)', advance = 'no') B
+  write(20,*) '  !---paramater B---!'
+  write(20,'(f16.10)', advance = 'no') C
+  write(20,*) '  !---paramater C---!'
+  write(20,'(f16.10)', advance = 'no') D
+  write(20,*) '  !---paramater D---!'
+  write(20,'(f16.10)', advance = 'no') yf
+  write(20,*) '  !---paramater yf---!'
+  write(20,'(f16.10)', advance = 'no') lam
+  write(20,*) '  !---paramater lamda---!'
+  write(20,'(i5)', advance = 'no') dn
+  write(20,*) '             !---Division number---!'
+
   close(20)
   
   !---Calculate F function---!
