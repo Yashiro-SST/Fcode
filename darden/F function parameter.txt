@@ -1,8 +1,8 @@
-   300   !---Length---!
-   0.34622   !---paramater A---!
-   0.0000000000   !---paramater B---!
-   0.05498627   !---paramater C---!
-   0.06832421   !---paramater D---!
-   30   !---paramater yf---!
-   270.644   !---paramater lamda---!
+   46.0945800000   !---Length---!
+   97.1897298380   !---paramater A---!
+    0.0000000000   !---paramater B---!
+   13.7654592274   !---paramater C---!
+   15.3896157786   !---paramater D---!
+    4.6000000000   !---paramater yf---!
+   28.1601151451   !---paramater lamda---!
  1000              !---Division number---!
