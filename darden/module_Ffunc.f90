@@ -4,9 +4,9 @@ module Ffunc
 
     function cal_Ffunc(x, l, A, B, C, D, yf, lam, dn) result(F)
       integer, intent(in) :: dn
-      real(8), intent(in) :: x(dn)
+      real(8), intent(in) :: x(0:dn)
       real(8), intent(in) :: l, A, B, C, D, yf, lam 
-      real(8) F(dn), dx
+      real(8) F(0:dn), dx
       integer i
 
       F(:) = 0.0d0
