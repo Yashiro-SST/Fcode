@@ -879,9 +879,9 @@ module Ae_calculation
 
       Ae(:) = 0.0
       dy = l / dble(dn)
-      sum = 0.0d0
 
       do i = 0, dn+1
+        sum = 0.0d0
         do j = 0, i
           y = dy * dble(j)
           z = F(j) * sqrt(x(i)-y)
@@ -892,7 +892,7 @@ module Ae_calculation
             sum = sum + z
           end if
         end do
-
+        
         Ae(i) = 4 * sum * dy
       enddo
 
