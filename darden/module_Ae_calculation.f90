@@ -4,16 +4,16 @@ module Ae_calculation
   
     function Ae_cal(x, F, l, dn) Result(Ae)
       integer, intent(in) :: dn
-      real(8), intent(in) :: x(dn), F(dn)
+      real(8), intent(in) :: x(0:dn), F(0:dn)
       real(8), intent(in) :: l
-      real(8) Ae(dn), y, z, dy, sum
+      real(8) Ae(0:dn), y, z, dy, sum
       integer i, j
 
       Ae(:) = 0.0
       dy = l / dble(dn)
-      sum = 0.0d0
 
-      do i = 0, dn+1
+      do i = 0, dn
+        sum = 0.0d0
         do j = 0, i
           y = dy * dble(j)
           z = F(j) * sqrt(x(i)-y)
