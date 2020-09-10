@@ -1,8 +1,8 @@
-!=======================================================================!
-! program  Culculation of  Darden's  F function								!
-!	input	 :	input_darden.txt										!
-!	output	:	F.txt, AE.txt												!
-!=======================================================================!
+!==============================================================================!
+! program  Culculation   Darden's  F function	and Equivalent Area Destribution !
+!	input   :	F function parameter.txt !
+!	output　:	Darden Ffunc.txt, Equivalent Area Destribution.txt !
+!==============================================================================!
 module Ffunc
   implicit none
   contains
@@ -124,12 +124,14 @@ program Ffunction
     write (*,*)i, x(i), F(i)
   end do
 
+  !---Output Ffunction---!
+
   open(20, file='Darden Ffunc.txt')
 
   write(20,*) 'i,   x(i),   F(i)'
-    do i = 0, dn
-      write(20,*) i, x(i), F(i)
-    end do
+  do i = 0, dn
+    write(20,*) i, x(i), F(i)
+  end do
 
   close(20)
   write(*,*) 'output Ffunc is completed !'
@@ -143,13 +145,13 @@ program Ffunction
     write (*,*)i, x(i), Ae(i)
   end do
 
+  !---Output Equivalent Area Destribution---!
+
   open(30, file='Equivalent Area Destribution.txt')
-  write(*,*) 'bug check'
 
   write (30,*) 'i,   x(i),   Ae(i)'
   do i = 0, dn
     write(30,*) i, x(i), Ae(i)
-    write(*,*) 'wrote i =', i
   end do
 
   close(30)
