@@ -1,289 +1,10 @@
 !=======================================================================!
-! program  Culculation of  Darden's  F function								!
+! program  Culculation of  Darden's  F function	parameter			  				!
 !	input	 :	input_darden.txt										!
-!	output	:	F.txt, AE.txt												!
+!	output	:	F function parameter.txt												!
 !=======================================================================!
-program darden
-  use daikei_sekibun
-  use Ffunc
-  use Ae_calculation
-  implicit none
 
-  !---Variable definition---!
-
-  real(8) A, C, D, lam, yr
-  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
-  real(8) S, k, beta, u_inf, a_inf, Ae_l
-  real(8) C0,dC,D0,dD
-  real(8) err
-  real(8) lam1, lam2, lam3
-  real(8) dx
-  real(8) F10, F20, F1C, F2C, F1D, F2D
-  real(8) FYR_int1, FYR_int2, FYR_int3, FYR_int4
-  real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
-  real(8) Q1, Q2, Q3, Q4
-  real(8) QC1, QC2, QC3, QC4
-  real(8), allocatable :: x(:), F(:), Ae(:)
-  integer dn, i, ite_max
-
-  !---Reading paramator---!
-  open(10,file='input_darden.txt')
-
-  read(10,*) mu, B               !---front/rear shock ratio, sig paramata B
-  read(10,*) M_inf, h_inf        !---Mach number, Flight height
-  read(10,*) W, l, yf            !---Weight, Effective length, nose length
-  read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
-  read(10,*) gamma, R, AMW       !---Specific heat ratio，Gas constant, Average molecular weight
-  read(10,*) C0, D0              !---initial C, D
-  read(10,*) dn                  !---Division number @ integral
-  read(10,*) ite_max             !---Maximum number of iterations
-
-  close(10)
-
-  !---Calculation Known function---!
-
-  beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
-  a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
-  u_inf = M_inf * a_inf
-  k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
-  S = l / (k * sqrt(abs(h_inf / l)))
-  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)
-
-  !---Output---!
-
-  write(*,*) 'mu = ', mu
-  write(*,*) 'B = ', B
-  write(*,*) 'M = ', M_inf
-  write(*,*) 'h = ', h_inf
-  write(*,*) 'W = ', W
-  write(*,*) 'l = ', l
-  write(*,*) 'yf = ', yf
-  write(*,*) 'rho = ', rho_inf
-  write(*,*) 'T = ', T_inf
-  write(*,*) 'gamma = ', gamma
-  write(*,*) 'R = ', R
-  write(*,*) 'AMW = ', AMW
-  write(*,*) 'beta = ', beta
-  write(*,*) 'a_inf = ', a_inf
-  write(*,*) 'u_inf = ', u_inf
-  write(*,*) 'k = ', k
-  write(*,*) 's = ', s
-  write(*,*) 'Ae_l = ', Ae_l
-  write(*,*) 'C0 = ', C0
-  write(*,*) 'D0 = ', D0
-
-
-  !---Newton method---!
-  err = 1.0d0 * 10d0**(-4d0)
-
-  do i = 0, ite_max
-
-    write(*,*) '_____________________________'
-
-    write(*,*) 'iteration' , i+1
-    write(*,*) 'C0 = ', C0
-    write(*,*) 'D0 = ', D0
-
-    !---Calculation unknown funcion---!
-    A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
-    yr = l + C0 / ( S * mu )
-    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - yf / 2.0d0) ** 2.5d0) / (15d0 * yf)
-    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
-    lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
-
-    write(*,*) 'A = ', A
-    write(*,*) 'yr = ', yr
-    write(*,*) 'lam1 = ', lam1
-    write(*,*) 'lam2 = ', lam2
-    write(*,*) 'lam3 = ', lam3
-    write(*,*) 'lam = ', lam
-
-    !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
-
-    FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
-    !write(*,*) 'FYR_int1 = ', FYR_int1
-    FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
-    !write(*,*) 'FYR_int2 = ', FYR_int2
-    FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
-    !write(*,*) 'FYR_int3 = ', FYR_int3
-    FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
-    !write(*,*) 'FYR_int4 = ', FYR_int4
-    F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
-    !write(*,*) 'F10 = ', F10
-
-    FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
-    !write(*,*) 'FYR_partialC1 = ', FYR_C1
-    FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
-    !write(*,*) 'FYR_partialC2 = ', FYR_C2
-    FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    !write(*,*) 'FYR_partialC3 = ', FYR_C3
-    FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
-    !write(*,*) 'FYR_partialC4 = ', FYR_C4
-    F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
-                      FYR_C1, FYR_C2, FYR_C3, FYR_C4)
-    !write(*,*) 'F1C = ', F1C
-    
-    F1D = F1_partialD(l, yr, lam, dn)
-    !write(*,*) 'F1D = ', F1D
-    
-    Q1 = Qterm1(l, yf, yr, A, dn)
-    !write(*,*) 'Qterm1 = ', Q1
-    Q2 = Qterm2(l, yf, yr, A, C0, dn)
-    !write(*,*) 'Qterm2 = ', Q2
-    Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
-    !write(*,*) 'Qterm3 = ', Q3
-    Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
-    !write(*,*) 'Qterm4 = ', Q4
-    F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
-    !write(*,*) 'F20 = ', F20
-
-    QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
-    !write(*,*) 'QC1 = ', QC1
-    QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
-    !write(*,*) 'QC2 = ', QC2
-    QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    !write(*,*) 'QC3 = ', QC3
-    QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
-    !write(*,*) 'QC4 = ', QC4
-    F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
-    !write(*,*) 'F2C = ', F2C
-
-    F2D = F2_partialD(l, S, yr, lam, dn)
-    !write(*,*) 'F2D = ', F2D
-    
-
-    !---calculation delC and delD @ this iteration---!
-
-    dC = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
-    dD = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
-
-    write(*,*) 'delC =', dC
-    write(*,*) 'delD =', dD
-
-    !---Convergence judgment---!
-
-    if (abs(dC) < err .and. abs(dD) < err) then
-      write(*,*) ' '
-      write(*,*) 'delD and delC is Converged!!!'
-      write(*,*) 'Iteration number =', i
-      exit
-
-    else if (abs(dC) >= err .and. abs(dD) >= err) then
-      C0 = C0 + dC
-      D0 = D0 + dD
-    
-    else if (abs(dC) < err .and. abs(dD) >= err) then
-      D0 = D0 + dD
-    
-    else if (abs(dC) >= err .and. abs(dD) < err) then
-      C0 = C0 + dC
-
-    else
-      write(*,*) 'dC = ', dC
-      write(*,*) 'dD = ', dD
-      stop 'something is wrong !!'
-    endif
-
-  enddo
-
-  C = C0
-  D = D0
-
-  !---output parameter for cal_Ffunction---!
-
-  write(*,*) 'mu = ', mu
-  write(*,*) 'B = ', B
-  write(*,*) 'M = ', M_inf
-  write(*,*) 'h = ', h_inf
-  write(*,*) 'W = ', W
-  write(*,*) 'l = ', l
-  write(*,*) 'yf = ', yf
-  write(*,*) 'rho = ', rho_inf
-  write(*,*) 'T = ', T_inf
-  write(*,*) 'gamma = ', gamma
-  write(*,*) 'R = ', R
-  write(*,*) 'AMW = ', AMW
-  write(*,*) 'beta = ', beta
-  write(*,*) 'a_inf = ', a_inf
-  write(*,*) 'u_inf = ', u_inf
-  write(*,*) 'k = ', k
-  write(*,*) 's = ', s
-  write(*,*) 'Ae_l = ', Ae_l
-
-  write(*,*) 'A = ', A
-  write(*,*) 'yr = ', yr
-  write(*,*) 'lam = ', lam
-  write(*,*) 'C = ', C
-  write(*,*) 'D = ', D
-
-  open(20, file='F function parameter.txt')
-
-  write(20,'(f16.10)', advance = 'no') l
-  write(20,*) '  !---Length---!'
-  write(20,'(f16.10)', advance = 'no') A
-  write(20,*) '  !---paramater A---!'
-  write(20,'(f16.10)', advance = 'no') B
-  write(20,*) '  !---paramater B---!'
-  write(20,'(f16.10)', advance = 'no') C
-  write(20,*) '  !---paramater C---!'
-  write(20,'(f16.10)', advance = 'no') D
-  write(20,*) '  !---paramater D---!'
-  write(20,'(f16.10)', advance = 'no') yf
-  write(20,*) '  !---paramater yf---!'
-  write(20,'(f16.10)', advance = 'no') lam
-  write(20,*) '  !---paramater lamda---!'
-  write(20,'(i5)', advance = 'no') dn
-  write(20,*) '             !---Division number---!'
-
-  close(20)
-  
-  !---Calculate F function---!
-  allocate (x(dn))
-  allocate (F(dn))
-
-  x(:) = 0.0d0
-  dx = l / dble(dn)
-  do i = 0, dn
-    x(i) = dx * dble(i)
-
-  enddo
-
-  F(:) = cal_Ffunc(x, l, A, B, C, D, yf, lam, dn)
-
-  open(30, file='Darden Ffunc.txt')
-
-      write (30,*) 'i,   x(i),   F(i)'
-      do i = 0, dn
-        write (30,*)i, x(i), F(i)
-      end do
-
-  close(30)
-  write(*,*) 'output Ffunc is completed !'
-
-  write(*,*)'Ffunction culculation and output finished!'
-
-  !---Calculate Equivalent Area---!
-  allocate (Ae(dn))
-
-  Ae(:) = Ae_cal(x, F, l, dn)
-
-  open(40, file='Equivalent Area Destribution.txt')
-
-      write (40,*) 'i,   x(i),   Ae(i)'
-      do i = 0, dn
-        write (40,*)i, x(i), Ae(i)
-      end do
-
-  close(40)
-  write(*,*) 'output Ae is completed !'
-  write(*,*) ' '
-
-end program darden
-
-
-
-!---module function of F1, F2---!
+!---module function of solve integral F1, F2---!
 
 module daikei_sekibun
   implicit none
@@ -833,69 +554,238 @@ module daikei_sekibun
 end module daikei_sekibun
 
 
-module Ffunc
+!---main program of calculate Ffunc parameter---!
+
+program darden
+  use daikei_sekibun
   implicit none
-  contains
 
-    function cal_Ffunc(x, l, A, B, C, D, yf, lam, dn) result(F)
-      integer, intent(in) :: dn
-      real(8), intent(in) :: x(dn)
-      real(8), intent(in) :: l, A, B, C, D, yf, lam 
-      real(8) F(dn), dx
-      integer i
+  !---Variable definition---!
 
-      F(:) = 0.0d0
-      dx = l / dble(dn)
+  real(8) A, C, D, lam, yr
+  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
+  real(8) S, k, beta, u_inf, a_inf, Ae_l
+  real(8) C0,dC,D0,dD
+  real(8) err
+  real(8) lam1, lam2, lam3
+  real(8) F10, F20, F1C, F2C, F1D, F2D
+  real(8) FYR_int1, FYR_int2, FYR_int3, FYR_int4
+  real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
+  real(8) Q1, Q2, Q3, Q4
+  real(8) QC1, QC2, QC3, QC4
+  integer dn, i, ite_max
+
+  !---Reading paramator---!
+  open(10,file='input_darden.txt')
+
+  read(10,*) mu, B               !---front/rear shock ratio, sig paramata B
+  read(10,*) M_inf, h_inf        !---Mach number, Flight height
+  read(10,*) W, l, yf            !---Weight, Effective length, nose length
+  read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
+  read(10,*) gamma, R, AMW       !---Specific heat ratio，Gas constant, Average molecular weight
+  read(10,*) C0, D0              !---initial C, D
+  read(10,*) dn                  !---Division number @ integral
+  read(10,*) ite_max             !---Maximum number of iterations
+
+  close(10)
+
+  !---Calculation Known function---!
+
+  beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
+  a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
+  u_inf = M_inf * a_inf
+  k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
+  S = l / (k * sqrt(abs(h_inf / l)))
+  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)
+
+  !---Output---!
+
+  write(*,*) 'mu = ', mu
+  write(*,*) 'B = ', B
+  write(*,*) 'M = ', M_inf
+  write(*,*) 'h = ', h_inf
+  write(*,*) 'W = ', W
+  write(*,*) 'l = ', l
+  write(*,*) 'yf = ', yf
+  write(*,*) 'rho = ', rho_inf
+  write(*,*) 'T = ', T_inf
+  write(*,*) 'gamma = ', gamma
+  write(*,*) 'R = ', R
+  write(*,*) 'AMW = ', AMW
+  write(*,*) 'beta = ', beta
+  write(*,*) 'a_inf = ', a_inf
+  write(*,*) 'u_inf = ', u_inf
+  write(*,*) 'k = ', k
+  write(*,*) 's = ', s
+  write(*,*) 'Ae_l = ', Ae_l
+  write(*,*) 'C0 = ', C0
+  write(*,*) 'D0 = ', D0
+
+
+  !---Newton method---!
+  err = 1.0d0 * 10d0**(-4d0)
+
+  do i = 0, ite_max
+
+    write(*,*) '_____________________________'
+
+    write(*,*) 'iteration' , i+1
+    write(*,*) 'C0 = ', C0
+    write(*,*) 'D0 = ', D0
+
+    !---Calculation unknown funcion---!
+    A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
+    yr = l + C0 / ( S * mu )
+    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
+    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - yf / 2.0d0) ** 2.5d0) / (15d0 * yf)
+    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
+    lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
+
+    write(*,*) 'A = ', A
+    write(*,*) 'yr = ', yr
+    write(*,*) 'lam1 = ', lam1
+    write(*,*) 'lam2 = ', lam2
+    write(*,*) 'lam3 = ', lam3
+    write(*,*) 'lam = ', lam
+
+    !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
+
+    FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
+    !write(*,*) 'FYR_int1 = ', FYR_int1
+    FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
+    !write(*,*) 'FYR_int2 = ', FYR_int2
+    FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
+    !write(*,*) 'FYR_int3 = ', FYR_int3
+    FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
+    !write(*,*) 'FYR_int4 = ', FYR_int4
+    F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
+    !write(*,*) 'F10 = ', F10
+
+    FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
+    !write(*,*) 'FYR_partialC1 = ', FYR_C1
+    FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
+    !write(*,*) 'FYR_partialC2 = ', FYR_C2
+    FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    !write(*,*) 'FYR_partialC3 = ', FYR_C3
+    FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
+    !write(*,*) 'FYR_partialC4 = ', FYR_C4
+    F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
+                      FYR_C1, FYR_C2, FYR_C3, FYR_C4)
+    !write(*,*) 'F1C = ', F1C
     
-      do i = 0, dn+1
-        if(x(i) <= (yf / 2.0d0)) then
-          F(i) = 2.0d0 * x(i) * A / yf
-        
-        else if((yf / 2.0d0) < x(i) .and. x(i) < yf ) then
-          F(i) = C * (2.0d0 * x(i) / yf - 1.0d0) - A * (2.0d0 * x(i) / yf - 2.0d0)
+    F1D = F1_partialD(l, yr, lam, dn)
+    !write(*,*) 'F1D = ', F1D
     
-        else if(yf <= x(i) .and. x(i) < lam) then 
-          F(i) = B * (x(i) - yf) + C
+    Q1 = Qterm1(l, yf, yr, A, dn)
+    !write(*,*) 'Qterm1 = ', Q1
+    Q2 = Qterm2(l, yf, yr, A, C0, dn)
+    !write(*,*) 'Qterm2 = ', Q2
+    Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
+    !write(*,*) 'Qterm3 = ', Q3
+    Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
+    !write(*,*) 'Qterm4 = ', Q4
+    F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
+    !write(*,*) 'F20 = ', F20
+
+    QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
+    !write(*,*) 'QC1 = ', QC1
+    QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
+    !write(*,*) 'QC2 = ', QC2
+    QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    !write(*,*) 'QC3 = ', QC3
+    QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
+    !write(*,*) 'QC4 = ', QC4
+    F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
+    !write(*,*) 'F2C = ', F2C
+
+    F2D = F2_partialD(l, S, yr, lam, dn)
+    !write(*,*) 'F2D = ', F2D
     
-        else if(lam <= x(i) .and. x(i) < l) then
-          F(i) = B * (x(i) - yf) - D
-        end if
-      enddo
 
-    end function cal_Ffunc
+    !---calculation delC and delD @ this iteration---!
 
-end module Ffunc
+    dC = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
+    dD = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
 
-module Ae_calculation
-  implicit none
-  contains
-  
-    function Ae_cal(x, F, l, dn) Result(Ae)
-      integer, intent(in) :: dn
-      real(8), intent(in) :: x(dn), F(dn)
-      real(8), intent(in) :: l
-      real(8) Ae(dn), y, z, dy, sum
-      integer i, j
+    write(*,*) 'delC =', dC
+    write(*,*) 'delD =', dD
 
-      Ae(:) = 0.0
-      dy = l / dble(dn)
+    !---Convergence judgment---!
 
-      do i = 0, dn+1
-        sum = 0.0d0
-        do j = 0, i
-          y = dy * dble(j)
-          z = F(j) * sqrt(x(i)-y)
+    if (abs(dC) < err .and. abs(dD) < err) then
+      write(*,*) ' '
+      write(*,*) 'delD and delC is Converged!!!'
+      write(*,*) 'Iteration number =', i
+      exit
 
-          if (j == 0 .or. j ==i) then
-            sum = sum + 0.5d0 * z
-          else
-            sum = sum + z
-          end if
-        end do
-        
-        Ae(i) = 4 * sum * dy
-      enddo
+    else if (abs(dC) >= err .and. abs(dD) >= err) then
+      C0 = C0 + dC
+      D0 = D0 + dD
+    
+    else if (abs(dC) < err .and. abs(dD) >= err) then
+      D0 = D0 + dD
+    
+    else if (abs(dC) >= err .and. abs(dD) < err) then
+      C0 = C0 + dC
 
-    end function Ae_cal
+    else
+      write(*,*) 'dC = ', dC
+      write(*,*) 'dD = ', dD
+      stop 'something is wrong !!'
+    endif
 
-end module Ae_calculation
+  enddo
+
+  C = C0
+  D = D0
+
+  !---output parameter for cal_Ffunction---!
+
+  write(*,*) 'mu = ', mu
+  write(*,*) 'B = ', B
+  write(*,*) 'M = ', M_inf
+  write(*,*) 'h = ', h_inf
+  write(*,*) 'W = ', W
+  write(*,*) 'l = ', l
+  write(*,*) 'yf = ', yf
+  write(*,*) 'rho = ', rho_inf
+  write(*,*) 'T = ', T_inf
+  write(*,*) 'gamma = ', gamma
+  write(*,*) 'R = ', R
+  write(*,*) 'AMW = ', AMW
+  write(*,*) 'beta = ', beta
+  write(*,*) 'a_inf = ', a_inf
+  write(*,*) 'u_inf = ', u_inf
+  write(*,*) 'k = ', k
+  write(*,*) 's = ', s
+  write(*,*) 'Ae_l = ', Ae_l
+
+  write(*,*) 'A = ', A
+  write(*,*) 'yr = ', yr
+  write(*,*) 'lam = ', lam
+  write(*,*) 'C = ', C
+  write(*,*) 'D = ', D
+
+  open(20, file='F function parameter.txt')
+
+  write(20,'(f16.10)', advance = 'no') l
+  write(20,*) '  !---Length---!'
+  write(20,'(f16.10)', advance = 'no') A
+  write(20,*) '  !---paramater A---!'
+  write(20,'(f16.10)', advance = 'no') B
+  write(20,*) '  !---paramater B---!'
+  write(20,'(f16.10)', advance = 'no') C
+  write(20,*) '  !---paramater C---!'
+  write(20,'(f16.10)', advance = 'no') D
+  write(20,*) '  !---paramater D---!'
+  write(20,'(f16.10)', advance = 'no') yf
+  write(20,*) '  !---paramater yf---!'
+  write(20,'(f16.10)', advance = 'no') lam
+  write(20,*) '  !---paramater lamda---!'
+  write(20,'(i5)', advance = 'no') dn
+  write(20,*) '             !---Division number---!'
+
+  close(20)
+
+
+end program darden
