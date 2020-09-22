@@ -589,7 +589,7 @@ program darden
 
   close(10)
 
-  !---Calculation Known function---!
+  !---Calculate Known function---!
 
   beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
   a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
@@ -633,7 +633,7 @@ program darden
     write(*,*) 'C0 = ', C0
     write(*,*) 'D0 = ', D0
 
-    !---Calculation unknown funcion---!
+    !---Calculate unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
     lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
