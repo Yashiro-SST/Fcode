@@ -784,6 +784,11 @@ program darden
   write(20,*) '  !---paramater lamda---!'
   write(20,'(i5)', advance = 'no') dn
   write(20,*) '             !---Division number---!'
+  write(20,'(f16.10)', advance = 'no') yr
+  write(20,*) '  !---paramater yr---!'
+  write(20,'(f16.10)', advance = 'no') Ae_l
+  write(20,*) '  !---calculation result of Ae @x=l---!'
+
 
   close(20)
 
