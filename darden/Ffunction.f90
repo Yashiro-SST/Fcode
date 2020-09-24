@@ -79,7 +79,7 @@ program Ffunction
 
   !---Variable definition---!
 
-  real(8) l, A, B, C, D, yf, lam
+  real(8) l, l_n, A, B, C, D, yf, lam
   real(8) dx
   real(8), allocatable :: x(:), F(:), Ae(:)
   integer dn, i
@@ -98,13 +98,16 @@ program Ffunction
 
   close(10)
 
+  l_n = l / l
+
   write(*,*) 'l = ', l
+  write(*,*) 'l_normalizaed', l_n
   write(*,*) 'A = ', A
   write(*,*) 'B = ', B
   write(*,*) 'C = ', C
   write(*,*) 'D = ', D
-  write(*,*) 'yf = ', yf
-  write(*,*) 'lam = ', lam
+  write(*,*) 'yf(%) = ', yf
+  write(*,*) 'lam(%) = ', lam
   write(*,*) 'dn = ', dn
   
   !---Calculate F function---!
@@ -112,13 +115,12 @@ program Ffunction
   allocate (F(0:dn))
 
   x(:) = 0.0d0
-  dx = l / dble(dn)
+  dx = l_n / dble(dn)
   do i = 0, dn
     x(i) = dx * dble(i)
-
   enddo
 
-  F(:) = cal_Ffunc(x, l, A, B, C, D, yf, lam, dn)
+  F(:) = cal_Ffunc(x, l_n, A, B, C, D, yf, lam, dn)
   write(*,*) 'calculation Ffunc... '
   do i = 0, dn
     write (*,*)i, x(i), F(i)
@@ -139,10 +141,10 @@ program Ffunction
   !---Calculate Equivalent Area---!
   allocate (Ae(0:dn))
 
-  Ae(:) = Ae_cal(x, F, l, dn)
+  Ae(:) = Ae_cal(x, F, l_n, dn)
   write(*,*) 'calculation Ae... '
   do i = 0, dn
-    write (*,*)i, x(i), Ae(i)
+    write(*,*) i, x(i), Ae(i)
   end do
 
   !---Output Equivalent Area Destribution---!
