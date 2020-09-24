@@ -6,3 +6,5 @@
     4.6000000000   !---paramater yf---!
    28.1601151451   !---paramater lamda---!
  1000              !---Division number---!
+   80.8724472378   !---paramater yr---!
+   11.9484425721   !---calculation result of Ae @x=l---!
