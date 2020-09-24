@@ -563,7 +563,7 @@ program darden
   !---Variable definition---!
 
   real(8) A, C, D, lam, yr
-  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
+  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0,dC,D0,dD
   real(8) err
@@ -580,7 +580,7 @@ program darden
 
   read(10,*) mu, B               !---front/rear shock ratio, sig paramata B
   read(10,*) M_inf, h_inf        !---Mach number, Flight height
-  read(10,*) W, l, yf            !---Weight, Effective length, nose length
+  read(10,*) W, l, yf            !---Weight, Effective length, yf position (%)
   read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
   read(10,*) gamma, R, AMW       !---Specific heat ratio，Gas constant, Average molecular weight
   read(10,*) C0, D0              !---initial C, D
@@ -591,12 +591,16 @@ program darden
 
   !---Calculate Known function---!
 
+  l = l / l
   beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
-  a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
+  a_inf = 968.0741
   u_inf = M_inf * a_inf
   k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
-  S = l / (k * sqrt(abs(h_inf / l)))
-  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)
+  S = 0.00026967727
+  Ae_l = beta * W * 32.17405 /(rho_inf * u_inf**2.0d0)
+
+  !S = 1.0d0 / (k * sqrt(abs(h_inf / l)))!
+  !a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))!
 
   !---Output---!
 
@@ -606,7 +610,8 @@ program darden
   write(*,*) 'h = ', h_inf
   write(*,*) 'W = ', W
   write(*,*) 'l = ', l
-  write(*,*) 'yf = ', yf
+  write(*,*) 'lormalized = ', l
+  write(*,*) 'yf(%) = ', yf
   write(*,*) 'rho = ', rho_inf
   write(*,*) 'T = ', T_inf
   write(*,*) 'gamma = ', gamma
@@ -651,55 +656,55 @@ program darden
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
     FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
-    !write(*,*) 'FYR_int1 = ', FYR_int1
+    write(*,*) 'FYR_int1 = ', FYR_int1
     FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
-    !write(*,*) 'FYR_int2 = ', FYR_int2
+    write(*,*) 'FYR_int2 = ', FYR_int2
     FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
-    !write(*,*) 'FYR_int3 = ', FYR_int3
+    write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
-    !write(*,*) 'FYR_int4 = ', FYR_int4
+    write(*,*) 'FYR_int4 = ', FYR_int4
     F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
-    !write(*,*) 'F10 = ', F10
+    write(*,*) 'F10 = ', F10
 
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
-    !write(*,*) 'FYR_partialC1 = ', FYR_C1
+    write(*,*) 'FYR_partialC1 = ', FYR_C1
     FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
-    !write(*,*) 'FYR_partialC2 = ', FYR_C2
+    write(*,*) 'FYR_partialC2 = ', FYR_C2
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    !write(*,*) 'FYR_partialC3 = ', FYR_C3
+    write(*,*) 'FYR_partialC3 = ', FYR_C3
     FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
-    !write(*,*) 'FYR_partialC4 = ', FYR_C4
+    write(*,*) 'FYR_partialC4 = ', FYR_C4
     F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
                       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
-    !write(*,*) 'F1C = ', F1C
+    write(*,*) 'F1C = ', F1C
     
     F1D = F1_partialD(l, yr, lam, dn)
-    !write(*,*) 'F1D = ', F1D
+    write(*,*) 'F1D = ', F1D
     
     Q1 = Qterm1(l, yf, yr, A, dn)
-    !write(*,*) 'Qterm1 = ', Q1
+    write(*,*) 'Qterm1 = ', Q1
     Q2 = Qterm2(l, yf, yr, A, C0, dn)
-    !write(*,*) 'Qterm2 = ', Q2
+    write(*,*) 'Qterm2 = ', Q2
     Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
-    !write(*,*) 'Qterm3 = ', Q3
+    write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
-    !write(*,*) 'Qterm4 = ', Q4
+    write(*,*) 'Qterm4 = ', Q4
     F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
-    !write(*,*) 'F20 = ', F20
+    write(*,*) 'F20 = ', F20
 
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
-    !write(*,*) 'QC1 = ', QC1
+    write(*,*) 'QC1 = ', QC1
     QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
-    !write(*,*) 'QC2 = ', QC2
+    write(*,*) 'QC2 = ', QC2
     QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    !write(*,*) 'QC3 = ', QC3
+    write(*,*) 'QC3 = ', QC3
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
-    !write(*,*) 'QC4 = ', QC4
+    write(*,*) 'QC4 = ', QC4
     F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
-    !write(*,*) 'F2C = ', F2C
+    write(*,*) 'F2C = ', F2C
 
     F2D = F2_partialD(l, S, yr, lam, dn)
-    !write(*,*) 'F2D = ', F2D
+    write(*,*) 'F2D = ', F2D
     
 
     !---calculation delC and delD @ this iteration---!
@@ -747,7 +752,7 @@ program darden
   write(*,*) 'h = ', h_inf
   write(*,*) 'W = ', W
   write(*,*) 'l = ', l
-  write(*,*) 'yf = ', yf
+  write(*,*) 'yf(%) = ', yf
   write(*,*) 'rho = ', rho_inf
   write(*,*) 'T = ', T_inf
   write(*,*) 'gamma = ', gamma
@@ -761,15 +766,15 @@ program darden
   write(*,*) 'Ae_l = ', Ae_l
 
   write(*,*) 'A = ', A
-  write(*,*) 'yr = ', yr
-  write(*,*) 'lam = ', lam
+  write(*,*) 'yr(%) = ', yr
+  write(*,*) 'lam(%) = ', lam
   write(*,*) 'C = ', C
   write(*,*) 'D = ', D
 
   open(20, file='F function parameter.txt')
 
   write(20,'(f16.10)', advance = 'no') l
-  write(20,*) '  !---Length---!'
+  write(20,*) '  !---length---!'
   write(20,'(f16.10)', advance = 'no') A
   write(20,*) '  !---paramater A---!'
   write(20,'(f16.10)', advance = 'no') B
@@ -785,7 +790,7 @@ program darden
   write(20,'(i5)', advance = 'no') dn
   write(20,*) '             !---Division number---!'
   write(20,'(f16.10)', advance = 'no') yr
-  write(20,*) '  !---paramater yr---!'
+  write(20,*) '  !---paramater yr(%)---!'
   write(20,'(f16.10)', advance = 'no') Ae_l
   write(20,*) '  !---calculation result of Ae @x=l---!'
 
