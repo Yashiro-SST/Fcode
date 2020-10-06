@@ -115,15 +115,15 @@ module daikei_sekibun
 
     end function FYR_integral4
 
-    function F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4) Result(F10)
+    function F1initial(l, S, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4) Result(F10)
 
-      real(8), intent(in) :: l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4
+      real(8), intent(in) :: l, S, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4
       real(8) FYR, pi, F10
 
       pi = 2.0d0 * acos(0.0d0)
       
       FYR = -(FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / (pi * sqrt(abs(yr - l)))
-      F10 = S * (yr - l) + B * (l - yr) - D0 - FYR
+      F10 = S * (yr - l) + B * (l - yf) - D0 - FYR
     
     end function F1initial
 
@@ -236,10 +236,10 @@ module daikei_sekibun
 
     end function FYR_partialC4
 
-    function F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
+    function F1_partialC(l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
       FYR_C1, FYR_C2, FYR_C3, FYR_C4) Result(F1C)
       
-      real(8), intent(in) :: l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
+      real(8), intent(in) :: l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
       FYR_C1, FYR_C2, FYR_C3, FYR_C4
       real(8) pi, FYRC, F1C
 
@@ -247,7 +247,7 @@ module daikei_sekibun
       FYRC = - sqrt(S * mu) * C0**(-1.50d0) &
             * (FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / 2.0d0 * pi &
             + (FYR_C1 + FYR_C2 + FYR_C3 + FYR_C4) / (pi * sqrt(yr - l))
-      F1C = 1.0d0 / mu + B / (S * mu) - FYRC 
+      F1C = 1.0d0 / mu - FYRC 
 
     end function F1_partialC
 
@@ -389,13 +389,13 @@ module daikei_sekibun
 
     end function Qterm4
 
-    function F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4) Result(F20)
+    function F2initial(l, S, yf, yr, B, D0, Q1, Q2, Q3, Q4) Result(F20)
 
-      real(8), intent(in) :: l, S, yr, B, D0, Q1, Q2, Q3, Q4
+      real(8), intent(in) :: l, S, yf, yr, B, D0, Q1, Q2, Q3, Q4
       real(8) Q_sum, F20
       
       Q_sum = Q1 + Q2 + Q3 + Q4
-      F20 = (B * (l - yr) - D0 + S / 2.0d0 *(yr - D0)) * (yr - l) - Q_sum
+      F20 = (B * (l - yf) - D0 + S / 2.0d0 *(yr - D0)) * (yr - l) - Q_sum
 
     end function F2initial
 
@@ -563,7 +563,7 @@ program darden
   !---Variable definition---!
 
   real(8) A, C, D, lam, yr
-  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l, R, T_inf, rho_inf, AMW
+  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l_n, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0,dC,D0,dD
   real(8) err
@@ -591,7 +591,7 @@ program darden
 
   !---Calculate Known function---!
 
-  l = l / l
+  l_n = l / l
   beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
   a_inf = 968.0741
   u_inf = M_inf * a_inf
@@ -610,7 +610,7 @@ program darden
   write(*,*) 'h = ', h_inf
   write(*,*) 'W = ', W
   write(*,*) 'l = ', l
-  write(*,*) 'lormalized = ', l
+  write(*,*) 'lormalized = ', l_n
   write(*,*) 'yf(%) = ', yf
   write(*,*) 'rho = ', rho_inf
   write(*,*) 'T = ', T_inf
@@ -642,7 +642,7 @@ program darden
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
     lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - yf / 2.0d0) ** 2.5d0) / (15d0 * yf)
+    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - (yf / 2.0d0)) ** 2.5d0) / (15d0 * yf)
     lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
     lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
 
@@ -663,7 +663,7 @@ program darden
     write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
     write(*,*) 'FYR_int4 = ', FYR_int4
-    F10 = F1initial(l, S, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
+    F10 = F1initial(l, S, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
     write(*,*) 'F10 = ', F10
 
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
@@ -674,8 +674,8 @@ program darden
     write(*,*) 'FYR_partialC3 = ', FYR_C3
     FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
     write(*,*) 'FYR_partialC4 = ', FYR_C4
-    F1C = F1_partialC(l, S, yr, B, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
-                      FYR_C1, FYR_C2, FYR_C3, FYR_C4)
+    F1C = F1_partialC(l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
+      FYR_C1, FYR_C2, FYR_C3, FYR_C4)
     write(*,*) 'F1C = ', F1C
     
     F1D = F1_partialD(l, yr, lam, dn)
@@ -689,7 +689,7 @@ program darden
     write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
     write(*,*) 'Qterm4 = ', Q4
-    F20 = F2initial(l, S, yr, B, D0, Q1, Q2, Q3, Q4)
+    F20 = F2initial(l, S, yf, yr, B, D0, Q1, Q2, Q3, Q4)
     write(*,*) 'F20 = ', F20
 
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
