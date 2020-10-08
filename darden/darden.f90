@@ -365,7 +365,7 @@ module daikei_sekibun
       
       real(8), intent(in) :: l, yf, yr, lam, B, D0
       integer, intent(in) :: dn
-      real(8) dx, x, y, t, sum, pi, Q4
+      real(8) dx, x, y, t, sum, pi, lx, Q4
       integer i, n
 
       pi = 2.0d0 * acos(0.0d0)
@@ -373,12 +373,17 @@ module daikei_sekibun
       sum = 0.0d0
       n = nint((l - lam) / dx)
 
-      do i = 0, n-1
+      do i = 0, n
         x = lam + dx * dble(i)
-        t = atan(sqrt((yr - l) / (l - x)))
+        lx = l - x
+        if(lx <= 0.0d0) then
+          t = pi / 2.0d0
+        else
+          t = atan(sqrt((yr - l) / (l - x)))
+        end if
         y = (B * (x - yf) - D0) * t
 
-        if (i == 0 .or. i == n-1) then
+        if (i == 0 .or. i == n) then
           sum = sum + 0.5d0 * y
         else
           sum = sum + y
@@ -395,7 +400,7 @@ module daikei_sekibun
       real(8) Q_sum, F20
       
       Q_sum = Q1 + Q2 + Q3 + Q4
-      F20 = (B * (l - yf) - D0 + S / 2.0d0 *(yr - D0)) * (yr - l) - Q_sum
+      F20 = (B * (l - yf) - D0 + S / 2.0d0 *(yr - l)) * (yr - l) - Q_sum
 
     end function F2initial
 
@@ -512,20 +517,19 @@ module daikei_sekibun
 
     end function Q_partialC4
 
-    function F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4) result(F2C)
-      real(8), intent(in) :: l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4
+    function F2_partialC(l, S, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4) result(F2C)
+      real(8), intent(in) :: l, S, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4
       real(8) QC_sum, smu, F2C
 
       smu = S * mu
       QC_sum = QC1 + QC2 + QC3 + QC4
-      F2C = C0 * (B / smu + (S / (2.0d0 * smu)) * (1.0d0 / smu + 1.0d0)) &
-            - D0 + S * (l - D0) / 2.0d0 - QC_sum
+      F2C = (B * (l - yf) + C0 / mu - D0) / (S * mu) - QC_sum
 
     end function F2_partialC
 
-    function F2_partialD(l, S, yr, lam, dn) Result(F2D)
+    function F2_partialD(l, yr, lam, dn) Result(F2D)
 
-      real(8), intent(in) :: l, S, yr, lam
+      real(8), intent(in) :: l, yr, lam
       integer, intent(in) :: dn
       real(8) dx, x, y, sum, pi, QD, F2D
       integer i, n
@@ -547,7 +551,7 @@ module daikei_sekibun
       enddo
 
       QD = 2.0d0 / pi * sum * dx
-      F2D = (- 1.0d0 - S / 2.0d0) * (yr - l) - QD
+      F2D = -yr + l - QD
 
     end function F2_partialD
 
@@ -567,7 +571,7 @@ program darden
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0,dC,D0,dD
   real(8) err
-  real(8) lam1, lam2, lam3
+  real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
   real(8) FYR_int1, FYR_int2, FYR_int3, FYR_int4
   real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
@@ -593,11 +597,13 @@ program darden
 
   l_n = l / l
   beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
-  a_inf = 968.0741
+  a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
+  !a_inf = 968.0741
   u_inf = M_inf * a_inf
   k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
-  S = 0.00026967727
-  Ae_l = beta * W * 32.17405 /(rho_inf * u_inf**2.0d0)
+  S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
+  !S = 0.00026967727
+  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)  !yardpond--32.17405 kg m---9.80665
 
   !S = 1.0d0 / (k * sqrt(abs(h_inf / l)))!
   !a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))!
@@ -628,7 +634,10 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-4d0)
+  err = 1.0d0 * 10d0**(-5d0)
+
+  open(30, file='dCdDresult.txt')
+  write(30,*) 'i,   dC,   dD,   C0,   D0'
 
   do i = 0, ite_max
 
@@ -641,16 +650,22 @@ program darden
     !---Calculate unknown funcion---!
     A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
     yr = l + C0 / ( S * mu )
+    lyf = l - yf
+    lyfh = l - (yf / 2.0d0)
     lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 32d0 * (C - 2.0d0 * A) * ((l - (yf / 2.0d0)) ** 2.5d0) / (15d0 * yf)
-    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C) * ((l - yf) ** 2.5d0) / (15d0 * yf)
+    lam2 = 32d0 * (C0 - 2.0d0 * A) * (lyfh**2.5) / (15d0 * yf)
+    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C0) * (lyf**2.5) / (15d0 * yf)
+    lam4 = lam1 + lam2 + lam3 - Ae_l
     lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
+    write(*,*) 'lyf = ', lyf
+    write(*,*) 'lyfh = ', lyfh
     write(*,*) 'lam1 = ', lam1
     write(*,*) 'lam2 = ', lam2
     write(*,*) 'lam3 = ', lam3
+    write(*,*) 'lam4 = ', lam4
     write(*,*) 'lam = ', lam
 
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
@@ -700,10 +715,10 @@ program darden
     write(*,*) 'QC3 = ', QC3
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
     write(*,*) 'QC4 = ', QC4
-    F2C = F2_partialC(l, S, B, mu, C0, D0, QC1, QC2, QC3, QC4)
+    F2C = F2_partialC(l, S, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4)
     write(*,*) 'F2C = ', F2C
 
-    F2D = F2_partialD(l, S, yr, lam, dn)
+    F2D = F2_partialD(l, yr, lam, dn)
     write(*,*) 'F2D = ', F2D
     
 
@@ -714,6 +729,8 @@ program darden
 
     write(*,*) 'delC =', dC
     write(*,*) 'delD =', dD
+
+    write(30,*) i, dC, dD, C0, D0
 
     !---Convergence judgment---!
 
@@ -741,6 +758,8 @@ program darden
 
   enddo
 
+  close(30)
+
   C = C0
   D = D0
 
@@ -752,7 +771,7 @@ program darden
   write(*,*) 'h = ', h_inf
   write(*,*) 'W = ', W
   write(*,*) 'l = ', l
-  write(*,*) 'yf(%) = ', yf
+  write(*,*) 'yf = ', yf
   write(*,*) 'rho = ', rho_inf
   write(*,*) 'T = ', T_inf
   write(*,*) 'gamma = ', gamma
@@ -766,8 +785,8 @@ program darden
   write(*,*) 'Ae_l = ', Ae_l
 
   write(*,*) 'A = ', A
-  write(*,*) 'yr(%) = ', yr
-  write(*,*) 'lam(%) = ', lam
+  write(*,*) 'yr = ', yr
+  write(*,*) 'lam = ', lam
   write(*,*) 'C = ', C
   write(*,*) 'D = ', D
 
