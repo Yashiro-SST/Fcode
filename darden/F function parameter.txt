@@ -1,10 +1,10 @@
-   46.0945800000   !---Length---!
-   97.1897298380   !---paramater A---!
+  300.0000000000   !---length---!
+    0.3464037336   !---paramater A---!
     0.0000000000   !---paramater B---!
-   13.7654592274   !---paramater C---!
-   15.3896157786   !---paramater D---!
-    4.6000000000   !---paramater yf---!
-   28.1601151451   !---paramater lamda---!
+    0.0550000000   !---paramater C---!
+    0.0683507277   !---paramater D---!
+   30.0000000000   !---paramater yf---!
+  270.5198387639   !---paramater lamda---!
  1000              !---Division number---!
-   80.8724472378   !---paramater yr---!
-   11.9484425721   !---calculation result of Ae @x=l---!
+  503.9474910793   !---paramater yr(%)---!
+  976.2629878149   !---calculation result of Ae @x=l---!
