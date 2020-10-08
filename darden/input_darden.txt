@@ -1,8 +1,8 @@
 1.0d0 0.0d0                   !--front/rear shock ratio, sig paramata B
-2.7d0 60000d0                 !--Mach number, Flight height
-600000d0 300d0 30d0   !--Weight, Effective length, nose length
-0.007258898854d0 216.650d0          !--density, Tenparature @Flight height
-1.4d0 8.314462d0 28.966d0   !--Specific heat ratio，Gas constant, Average molecular weight
-0.055d0 0.06832d0                 !--initial C0, D0
+1.4d0 13800d0                 !--Mach number, Flight height
+50000d0 35.66789198d0 3.5d0 !--Weight, Effective length, nose length
+0.235124d0 216.650d0          !--density, Tenparature @Flight height
+1.403d0 8.314462d0 28.966d0   !--Specific heat ratio，Gas constant, Average molecular weight
+0.1d0 0.1d0                 !--initial C0, D0
 1000                          !--Division number (from zero to l)
 3000                          !--Maximum number of iterations
