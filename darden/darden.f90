@@ -14,7 +14,7 @@ module daikei_sekibun
       
       real(8), intent(in) :: l, yf, yr, A
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_int1
+      real(8) dx, x, y, sum, FYR_int1, K
       integer i, n
 
       dx =  l / dble(dn) 
@@ -23,7 +23,8 @@ module daikei_sekibun
 
       do i = 0, n
         x = dx * dble(i)
-        y = 2.0d0 * x * sqrt(abs(l - x)) * A / (yf * (yr - x))
+        K = sqrt(l - x) / (yr - x)
+        y = 2.0d0 * x / yf * A * K
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -40,7 +41,7 @@ module daikei_sekibun
       
       real(8), intent(in) :: l, yf, yr, A, C0
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_int2
+      real(8) dx, x, y, sum, FYR_int2, K
       integer i, n
 
       dx =  l / dble(dn) 
@@ -49,8 +50,8 @@ module daikei_sekibun
 
       do i = 0, n
         x = yf / 2.0d0 + dx * dble(i)
-        y = sqrt(abs(l - x)) / (yr - x) &
-          * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf -2.0d0) )
+        K = sqrt(l - x) / (yr - x)
+        y = K * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf -2.0d0))
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -67,7 +68,7 @@ module daikei_sekibun
       
       real(8), intent(in) :: l, yf, yr, lam, B, C0
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_int3
+      real(8) dx, x, y, sum, FYR_int3, K
       integer i, n
 
       dx =  l / dble(dn) 
@@ -76,7 +77,8 @@ module daikei_sekibun
 
       do i = 0, n
         x = yf + dx * dble(i)
-        y = sqrt(abs(l - x)) * (B * (x - yf) + C0) / (yr - x)
+        K = sqrt(l - x) / (yr - x)
+        y = K * (B * (x - yf) + C0)
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -93,7 +95,7 @@ module daikei_sekibun
       
       real(8), intent(in) :: l, yf, yr, lam, B, D0
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_int4
+      real(8) dx, x, y, sum, FYR_int4, K ,lx
       integer i, n
 
       dx =  l / dble(dn) 
@@ -102,7 +104,15 @@ module daikei_sekibun
 
       do i = 0, n
         x = lam + dx * dble(i)
-        y = sqrt(abs(l - x)) * (B * (x - yf) - D0) / (yr - x) 
+        lx = l - x
+
+        if(lx <= 0.0d0) then
+          K = 0.0d0
+        else
+          K = sqrt(l - x) / (yr - x)
+        end if
+
+        y = K * (B * (x - yf) - D0)
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -122,7 +132,7 @@ module daikei_sekibun
 
       pi = 2.0d0 * acos(0.0d0)
       
-      FYR = -(FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / (pi * sqrt(abs(yr - l)))
+      FYR = -1.0d0 * (FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / (pi * sqrt(abs(yr - l)))
       F10 = S * (yr - l) + B * (l - yf) - D0 - FYR
     
     end function F1initial
@@ -131,7 +141,7 @@ module daikei_sekibun
 
       real(8), intent(in) :: l, yf, yr, A, C0, S, mu
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_C1
+      real(8) dx, x, y, sum, FYR_C1, K, KC
       integer i, n
 
       dx =  l / dble(dn) 
@@ -140,8 +150,9 @@ module daikei_sekibun
 
       do i = 0, n
         x = dx * dble(i)
-        y = - 2.0d0 * x * sqrt(abs(l - x)) / (yf * (yr - x)) &
-            * (A / (S * mu *(yr - x)) -(2.0d0 * C0 / (S * yf) - 0.50d0))
+        K = sqrt(l - x) / (yr - x)
+        KC = -S * mu * sqrt(l - x) / ((C0 + S * mu * (l - x))**2.0d0)
+        y = KC * 2.0d0 * x * A / yf + K * 2.0d0 * x / yf * (2.0d0 * C0 / (S * yf) - 0.5d0)
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -158,7 +169,7 @@ module daikei_sekibun
 
       real(8), intent(in) :: l, yf, yr, A, C0, S, mu
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_C2
+      real(8) dx, x, y, sum, FYR_C2, K, KC
       integer i, n
 
       dx =  l / dble(dn) 
@@ -167,10 +178,11 @@ module daikei_sekibun
 
       do i = 0, n
         x = (yf / 2.0d0) + dx * dble(i)
-        y = - sqrt(abs(l - x)) / (yr - x) * (1.0d0 / (S * mu * (yr - x)) &
-            * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf - 2.0d0)) &
-            + (2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.50d0) &
-            * (2.0d0 * x / yf - 2.0d0))
+        K = sqrt(l - x) / (yr - x)
+        KC = -S * mu * sqrt(l - x) / ((C0 + S * mu * (l - x))**2.0d0)
+        y = KC * (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf - 2.0d0)) &
+            + K * (2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.50d0) &
+            * (2.0d0 * x / yf - 2.0d0)
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -187,7 +199,7 @@ module daikei_sekibun
 
       real(8), intent(in) :: l, S, yf, yr, lam, B, C0, mu
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_C3
+      real(8) dx, x, y, sum, FYR_C3, K, KC
       integer i, n
 
       dx =  l / dble(dn) 
@@ -196,8 +208,9 @@ module daikei_sekibun
 
       do i = 0, n
         x = yf + dx * dble(i)
-        y = - sqrt(abs(l - x)) / (yr - x) * ((B * (x - yf) + C0) &
-            / (S * mu * (yr - x)) + 1.0d0)
+        K = sqrt(l - x) / (yr - x)
+        KC = -S * mu * sqrt(l - x) / ((C0 + S * mu * (l - x))**2.0d0)
+        y = KC * (B * (x - yf) + C0) + K
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -210,11 +223,11 @@ module daikei_sekibun
 
     end function FYR_partialC3
 
-    function FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn) Result(FYR_C4)
+    function FYR_partialC4(l, S, yf, lam, B, C0, D0, mu, dn) Result(FYR_C4)
       
-      real(8), intent(in) :: l, S, yf, yr, lam, B, mu, D0
+      real(8), intent(in) :: l, S, yf, lam, B, mu, C0, D0
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, FYR_C4
+      real(8) dx, x, y, sum, FYR_C4, KC, lx
       integer i, n
 
       dx =  l / dble(dn) 
@@ -223,7 +236,15 @@ module daikei_sekibun
 
       do i = 0, n
         x = lam + dx * dble(i)
-        y = sqrt(abs(l - x)) / (S * mu * (yr - x)**2.0d0) * (B * (x - yf) - D0)  
+        lx = l - x
+
+        if(lx <= 0.0d0) then
+          KC = 0.0d0
+        else
+          KC = -S * mu * sqrt(l - x) / ((C0 + S * mu * (l - x))**2.0d0)
+        end if
+
+        y = KC * (B * (x - yf) - D0)
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -255,16 +276,24 @@ module daikei_sekibun
 
       real(8), intent(in) :: l, yr, lam
       integer, intent(in) :: dn
-      real(8) dx, x, y, sum, F1D
+      real(8) dx, x, y, sum, F1D, lx, K, pi, FYRD
       integer i, n
 
+      pi = 2.0d0 * acos(0.0d0)
       dx =  l / dble(dn) 
       sum = 0.0d0
       n = nint((l - lam) / dx)
 
       do i = 0, n
         x = lam + dx * dble(i)
-        y = - sqrt(abs(l - x)) / (yr - x) 
+        lx = l - x
+
+        if(lx <= 0.0d0) then
+          K = 0.0d0
+        else
+          K = sqrt(l - x) / (yr - x)
+        end if
+        y = K
 
         if (i == 0 .or. i ==n) then
           sum = sum + 0.5d0 * y
@@ -273,7 +302,8 @@ module daikei_sekibun
         end if
       enddo
 
-      F1D = - 1.0d0 - sum * dx
+      FYRD = - sum * dx / (pi * sqrt(yr - l))
+      F1D = - 1.0d0 - FYRD * dx
 
     end function F1_partialD
 
@@ -418,7 +448,7 @@ module daikei_sekibun
       do i = 0, n
         x = dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
-        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
         y = 2.0d0 * x / yf * ((2.0d0 * C0 / (S * yf) - 0.5d0) * t + A * tc)
 
         if (i == 0 .or. i ==n) then
@@ -446,9 +476,9 @@ module daikei_sekibun
       do i = 0, n
         x = dble(nint(yf / 2.0d0)) + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
-        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
-        y = (2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.5d0) &
-            * (2.0d0 * x / yf - 2.0d0) * t &
+        tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
+        y = ((2.0d0 * x / yf - 1.0d0) - (2.0d0 * C0 / (S * yf) - 0.5d0) &
+            * (2.0d0 * x / yf - 2.0d0)) * t &
             + (C0 * (2.0d0 * x / yf - 1.0d0) - A * (2.0d0 * x / yf - 2.0d0)) * tc
 
         if (i == 0 .or. i ==n) then
@@ -476,7 +506,7 @@ module daikei_sekibun
       do i = 0, n
         x = yf + dx * dble(i)
         t = atan(sqrt((yr - l) / (l - x)))
-        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
         y = t + (B * (x - yf) + C0) * tc
         
         if (i == 0 .or. i == n) then
@@ -503,7 +533,7 @@ module daikei_sekibun
 
       do i = 0, n-1
         x = lam + dx * dble(i)
-        tc = 1.0d0 / (2.0d0 * sqrt(S * mu * C0 * (l - x)) + C0)
+        tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
         y = (B * (x - yf) - D0) * tc
 
         if (i == 0 .or. i == n-1) then
@@ -687,7 +717,7 @@ program darden
     write(*,*) 'FYR_partialC2 = ', FYR_C2
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
     write(*,*) 'FYR_partialC3 = ', FYR_C3
-    FYR_C4 = FYR_partialC4(l, S, yf, yr, lam, B, D0, mu, dn)
+    FYR_C4 = FYR_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
     write(*,*) 'FYR_partialC4 = ', FYR_C4
     F1C = F1_partialC(l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
