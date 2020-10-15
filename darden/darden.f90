@@ -265,9 +265,9 @@ module daikei_sekibun
       real(8) pi, FYRC, F1C
 
       pi = 2.0d0 * acos(0.0d0)
-      FYRC = - sqrt(S * mu) * C0**(-1.50d0) &
-            * (FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) / 2.0d0 * pi &
-            + (FYR_C1 + FYR_C2 + FYR_C3 + FYR_C4) / (pi * sqrt(yr - l))
+      FYRC = sqrt(S * mu) * (C0**(-1.50d0)) / 2.0d0 * pi &
+            * (FYR_int1 + FYR_int2 + FYR_int3 + FYR_int4) &
+            - (FYR_C1 + FYR_C2 + FYR_C3 + FYR_C4) / (pi * sqrt(yr - l))
       F1C = 1.0d0 / mu - FYRC 
 
     end function F1_partialC
@@ -664,7 +664,7 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-5d0)
+  err = 1.0d0 * 10d0**(-6d0)
 
   open(30, file='dCdDresult.txt')
   write(30,*) 'i,   dC,   dD,   C0,   D0'
@@ -690,8 +690,6 @@ program darden
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
-    write(*,*) 'lyf = ', lyf
-    write(*,*) 'lyfh = ', lyfh
     write(*,*) 'lam1 = ', lam1
     write(*,*) 'lam2 = ', lam2
     write(*,*) 'lam3 = ', lam3
