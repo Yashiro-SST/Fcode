@@ -1,8 +1,8 @@
   300.0000000000   !---length---!
     0.3497760452   !---paramater A---!
     0.0000000000   !---paramater B---!
-    0.0552568744   !---paramater C---!
-    0.0684585775   !---paramater D---!
+    0.056   !---paramater C---!
+    0.0695   !---paramater D---!
    30.0000000000   !---paramater yf---!
   268.1739825467   !---paramater lamda---!
  1000              !---Division number---!
