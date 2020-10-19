@@ -633,7 +633,7 @@ program darden
   k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
   S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
   !S = 0.00026967727
-  Ae_l = beta * W * 9.80665 /(rho_inf * u_inf**2.0d0)  !yardpond--32.17405 kg m---9.80665
+  Ae_l = beta * W * 32.17405 /(rho_inf * u_inf**2.0d0)  !yardpond--32.17405 kg m---9.80665
 
   !S = 1.0d0 / (k * sqrt(abs(h_inf / l)))!
   !a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))!
@@ -664,7 +664,7 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-6d0)
+  err = 1.0d0 * 10d0**(-4d0)
 
   open(30, file='dCdDresult.txt')
   write(30,*) 'i,   dC,   dD,   C0,   D0'
