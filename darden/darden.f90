@@ -587,11 +587,160 @@ module daikei_sekibun
 
 end module daikei_sekibun
 
+module Darden_variable
+  implicit none
+  contains
+
+    function cal_beta(M_inf) Result(beta)
+      real(8), intent(in) :: M_inf
+      real(8) beta
+
+      beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
+
+    end function cal_beta
+
+    function cal_ainf(gamma, R, T_inf, AMW, unit) Result(a_inf)
+      real(8), intent(in) :: gamma, R, T_inf, AMW
+      real(8) a_inf
+      integer, intent(in) :: unit
+
+      if (unit == 1) then
+        a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
+      else if (unit == 0) then
+        a_inf = 968.0741
+      else
+        stop 'cal_a error, invalid unit system number is entered!!!'
+      end if
+
+    end function cal_ainf
+
+    function cal_u(M_inf, a_inf) Result(u_inf)
+      real(8), intent(in) :: M_inf, a_inf
+      real(8) u_inf
+
+      u_inf = M_inf * a_inf
+
+    end function cal_u
+
+    function cal_k(gamma, M_inf, beta) Result(k)
+      real(8), intent(in) :: gamma, M_inf, beta
+      real(8) k
+
+      k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
+
+    end function cal_k
+
+    function cal_S(k, h_inf, l, unit) Result(S)
+      real(8), intent(in) :: k, h_inf, l
+      real(8) S
+      integer, intent(in) :: unit
+
+      if (unit == 1) then
+        S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
+      else if (unit == 0) then
+        S = 0.00026967727
+      else
+        stop 'cal_S error, invalid unit system number is entered!!!'
+      end if
+
+    end function cal_S
+
+    function cal_Ae_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
+      real(8), intent(in) :: beta, W, rho_inf, u_inf
+      real(8) g, Ae_l
+      integer, intent(in) :: unit
+
+      if (unit == 1) then
+        g = 9.80665
+      else if (unit == 0) then
+        g = 32.17405
+      else
+        stop 'cal_Ae error, invalid unit system number is entered!!!'
+      end if
+
+      Ae_l = beta * W * g /(rho_inf * u_inf**2.0d0)
+
+    end function cal_Ae_l
+
+    function cal_A(C0, S, yf) Result(A)
+      real(8), intent(in) :: C0, S, yf
+      real(8) A
+
+      A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
+
+    end function cal_A
+
+    function cal_yr(l, C0, S, mu) Result(yr)
+      real(8), intent(in) :: l, C0, S, mu
+      real(8) yr
+
+      yr = l + C0 / ( S * mu )
+
+    end function cal_yr
+
+    function cal_lyf(l, yf) Result(lyf)
+      real(8), intent(in) :: l, yf
+      real(8) lyf
+
+      lyf = l - yf
+
+    end function cal_lyf
+
+    function cal_lyfh(l, yf) Result(lyfh)
+      real(8), intent(in) :: l, yf
+      real(8) lyfh
+
+      lyfh = l - (yf / 2.0d0)
+
+    end function cal_lyfh
+
+    function cal_lam1(A, yf, l) Result(lam1)
+      real(8), intent(in) :: A, yf, l
+      real(8) lam1
+
+      lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
+
+    end function cal_lam1
+
+    function cal_lam2(A, C0, yf, lyfh) Result(lam2)
+      real(8), intent(in) :: A, C0, yf, lyfh
+      real(8) lam2
+
+      lam2 = 32d0 * (C0 - 2.0d0 * A) * (lyfh**2.5) / (15d0 * yf)
+
+    end function cal_lam2
+
+    function cal_lam3(A, B, C0, yf, lyf) Result(lam3)
+      real(8), intent(in) :: A, B, C0, yf, lyf
+      real(8) lam3
+
+      lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C0) * (lyf**2.5) / (15d0 * yf)
+
+    end function cal_lam3
+
+    function cal_lam4(lam1, lam2, lam3, Ae_l) Result(lam4)
+      real(8), intent(in) :: lam1, lam2, lam3, Ae_l
+      real(8) lam4
+
+      lam4 = lam1 + lam2 + lam3 - Ae_l
+
+    end function cal_lam4
+
+    function cal_lam(l, lam4,C0, D0) Result(lam)
+      real(8), intent(in) :: l, lam4,C0, D0
+      real(8) lam
+
+      lam = l - (3.0d0 * (lam4) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
+
+    end function cal_lam
+
+end module Darden_variable
 
 !---main program of calculate Ffunc parameter---!
 
 program darden
   use daikei_sekibun
+  use Darden_variable
   implicit none
 
   !---Variable definition---!
@@ -599,15 +748,16 @@ program darden
   real(8) A, C, D, lam, yr
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l_n, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
-  real(8) C0,dC,D0,dD
-  real(8) err
+  real(8) C0, dC, D0, dD, dC_n, dD_n
+  real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
+  real(8) eps
   real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
   real(8) FYR_int1, FYR_int2, FYR_int3, FYR_int4
   real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
   real(8) Q1, Q2, Q3, Q4
   real(8) QC1, QC2, QC3, QC4
-  integer dn, i, ite_max
+  integer dn, i, j, ite_max, unit
 
   !---Reading paramator---!
   open(10,file='input_darden.txt')
@@ -620,23 +770,19 @@ program darden
   read(10,*) C0, D0              !---initial C, D
   read(10,*) dn                  !---Division number @ integral
   read(10,*) ite_max             !---Maximum number of iterations
+  read(10,*) unit                !---Unit System Change yardpond(0), MKS(1)
+  read(10,*) eps                 !---allowable error "epsilon"
 
   close(10)
 
   !---Calculate Known function---!
 
-  l_n = l / l
-  beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
-  a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
-  !a_inf = 968.0741
-  u_inf = M_inf * a_inf
-  k = (gamma + 1) * M_inf**4.0d0 / sqrt(2.0d0 * beta**3.0d0)
-  S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
-  !S = 0.00026967727
-  Ae_l = beta * W * 32.17405 /(rho_inf * u_inf**2.0d0)  !yardpond--32.17405 kg m---9.80665
-
-  !S = 1.0d0 / (k * sqrt(abs(h_inf / l)))!
-  !a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))!
+  beta  = cal_beta(M_inf)
+  a_inf = cal_ainf(gamma, R, T_inf, AMW, unit)
+  u_inf = cal_u(M_inf, a_inf)
+  k     = cal_k(gamma, M_inf, beta)
+  S     = cal_S(k, h_inf, l, unit)
+  Ae_l  = cal_Ae_l(beta, W, rho_inf, u_inf, unit)
 
   !---Output---!
 
@@ -664,10 +810,9 @@ program darden
 
 
   !---Newton method---!
-  err = 1.0d0 * 10d0**(-4d0)
 
-  open(30, file='dCdDresult.txt')
-  write(30,*) 'i,   dC,   dD,   C0,   D0'
+  open(30, file='result.txt')
+  write(30,*) 'i+1,   dC,   dD,   C0,   D0,   lam4,   lam'
 
   do i = 0, ite_max
 
@@ -678,15 +823,15 @@ program darden
     write(*,*) 'D0 = ', D0
 
     !---Calculate unknown funcion---!
-    A = ( C0**2.0d0 / ( S * yf ) ) - C0 / 2.0d0
-    yr = l + C0 / ( S * mu )
-    lyf = l - yf
-    lyfh = l - (yf / 2.0d0)
-    lam1 = 32d0 * A * (l**2.5) / (15d0 * yf)
-    lam2 = 32d0 * (C0 - 2.0d0 * A) * (lyfh**2.5) / (15d0 * yf)
-    lam3 = 16d0 * (2.0d0 * A + B * yf - 2.0d0 * C0) * (lyf**2.5) / (15d0 * yf)
-    lam4 = lam1 + lam2 + lam3 - Ae_l
-    lam = l - (3.0d0 * (lam1 + lam2 + lam3 - Ae_l) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
+    A    = cal_A(C0, S, yf)
+    yr   = cal_yr(l, C0, S, mu)
+    lyf  = cal_lyf(l, yf)
+    lyfh = cal_lyfh(l, yf)
+    lam1 = cal_lam1(A, yf, l)
+    lam2 = cal_lam2(A, C0, yf, lyfh)
+    lam3 = cal_lam3(A, B, C0, yf, lyf)
+    lam4 = cal_lam4(lam1, lam2, lam3, Ae_l)
+    lam  = cal_lam(l, lam4,C0, D0)
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
@@ -695,6 +840,11 @@ program darden
     write(*,*) 'lam3 = ', lam3
     write(*,*) 'lam4 = ', lam4
     write(*,*) 'lam = ', lam
+
+    if(lam4 <= 0) then
+      write(*,*) 'lam = NaN!!!'
+      stop
+    end if
 
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
@@ -752,37 +902,67 @@ program darden
 
     !---calculation delC and delD @ this iteration---!
 
-    dC = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
-    dD = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
+    dC_n = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
+    dD_n = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
 
-    write(*,*) 'delC =', dC
-    write(*,*) 'delD =', dD
+    write(*,*) 'delC =', dC_n
+    write(*,*) 'delD =', dD_n
 
-    write(30,*) i, dC, dD, C0, D0
+    !Next lamda judgement. If next lam4 will be minus, dC have to be changed.
+
+    do j = 0, ite_max
+      C0_n = C0 + dC_n
+      A_n    = cal_A(C0_n, S, yf)
+      lam1_n = cal_lam1(A_n, yf, l)
+      lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
+      lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
+      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+
+      if (lam4_n <= 0.0d0) then
+        dC_n = dC_n / 1.1d0
+        write(*,*) 'dC is changed'
+        write(*,*) 'delC =', dC_n
+
+      else
+        exit
+
+      end if
+
+    end do
+
+    !---Output variables for result file @ current loop---!
+
+    write(30,*) i, dC_n, dD_n, C0, D0, lam4, lam
 
     !---Convergence judgment---!
 
-    if (abs(dC) < err .and. abs(dD) < err) then
+    !abs(dC_n) < eps .and. abs(dD_n) < eps
+    !abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)
+
+    if (abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)) then
       write(*,*) ' '
       write(*,*) 'delD and delC is Converged!!!'
-      write(*,*) 'Iteration number =', i
+      write(*,*) 'Iteration number =', i+1
       exit
 
-    else if (abs(dC) >= err .and. abs(dD) >= err) then
-      C0 = C0 + dC
-      D0 = D0 + dD
+    else if (abs(dC_n-dC) >= eps * abs(dC_n) .and. abs(dD_n-dD) >= eps * abs(dD_n)) then
+      C0 = C0 + dC_n
+      D0 = D0 + dD_n
     
-    else if (abs(dC) < err .and. abs(dD) >= err) then
-      D0 = D0 + dD
+    else if (abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) >= eps * abs(dD_n)) then
+      D0 = D0 + dD_n
     
-    else if (abs(dC) >= err .and. abs(dD) < err) then
-      C0 = C0 + dC
+    else if (abs(dC_n-dC) >= eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)) then
+      C0 = C0 + dC_n
 
     else
-      write(*,*) 'dC = ', dC
-      write(*,*) 'dD = ', dD
+      write(*,*) 'dC = ', dC_n
+      write(*,*) 'dD = ', dD_n
       stop 'something is wrong !!'
     endif
+
+    dC = dC_n
+    dD = dD_n
 
   enddo
 
