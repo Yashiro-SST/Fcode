@@ -746,10 +746,10 @@ program darden
   !---Variable definition---!
 
   real(8) A, C, D, lam, yr
-  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l_n, R, T_inf, rho_inf, AMW
+  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0, dC, D0, dD
-  !real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
+  real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
   real(8) eps, errC, errD
   real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
@@ -792,7 +792,6 @@ program darden
   write(*,*) 'h = ', h_inf
   write(*,*) 'W = ', W
   write(*,*) 'l = ', l
-  write(*,*) 'lormalized = ', l_n
   write(*,*) 'yf(%) = ', yf
   write(*,*) 'rho = ', rho_inf
   write(*,*) 'T = ', T_inf
@@ -911,25 +910,25 @@ program darden
 
     !Next lamda judgement. If next lam4 will be minus, dC have to be changed.
 
-    !do j = 0, ite_max
-      !C0_n = C0 + dC
-      !A_n    = cal_A(C0_n, S, yf)
-      !lam1_n = cal_lam1(A_n, yf, l)
-      !lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
-      !lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
-      !lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+    do j = 0, ite_max
+      C0_n = C0 + dC
+      A_n    = cal_A(C0_n, S, yf)
+      lam1_n = cal_lam1(A_n, yf, l)
+      lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
+      lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
+      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
 
-      !if (lam4_n <= 0.0d0) then
-        !dC = dC / 1.1d0
-        !write(*,*) 'dC is changed'
-        !write(*,*) 'delC =', dC
+      if (lam4_n <= 0.0d0) then
+        dC = dC / 1.5d0
+        write(*,*) 'dC is changed'
+        write(*,*) 'delC =', dC
 
-      !else
-        !exit
+      else
+        exit
 
-      !end if
+      end if
 
-    !end do
+    end do
 
     !---Output variables for result file @ current loop---!
 
