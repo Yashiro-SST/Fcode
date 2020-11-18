@@ -1,10 +1,10 @@
   300.0000000000   !---length---!
-    0.3291630000   !---paramater A---!
+    0.3463920922   !---paramater A---!
     0.0000000000   !---paramater B---!
-    0.0536667860   !---paramater C---!
-    0.0686516225   !---paramater D---!
+    0.0549991111   !---paramater C---!
+    0.0683276331   !---paramater D---!
    30.0000000000   !---paramater yf---!
-  285.1043117985   !---paramater lamda---!
+  270.5245106033   !---paramater lamda---!
  1000              !---Division number---!
-  499.0037521538   !---paramater yr(%)---!
+  503.9441948931   !---paramater yr(%)---!
   976.2629878149   !---calculation result of Ae @x=l---!
