@@ -749,7 +749,7 @@ program darden
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l_n, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0, dC, D0, dD
-  real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
+  !real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
   real(8) eps, errC, errD
   real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
