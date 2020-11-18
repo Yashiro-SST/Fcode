@@ -748,9 +748,9 @@ program darden
   real(8) A, C, D, lam, yr
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, l_n, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
-  real(8) C0, dC, D0, dD, dC_n, dD_n
+  real(8) C0, dC, D0, dD
   real(8) C0_n, A_n, lam1_n, lam2_n, lam3_n, lam4_n
-  real(8) eps
+  real(8) eps, errC, errD
   real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
   real(8) FYR_int1, FYR_int2, FYR_int3, FYR_int4
@@ -807,12 +807,13 @@ program darden
   write(*,*) 'Ae_l = ', Ae_l
   write(*,*) 'C0 = ', C0
   write(*,*) 'D0 = ', D0
+  write(*,*) 'epsilon = ', eps
 
 
   !---Newton method---!
 
   open(30, file='result.txt')
-  write(30,*) 'i+1,   dC,   dD,   C0,   D0,   lam4,   lam'
+  write(30,*) 'i,   dC,   dD,   C0,   D0,   lam4,   lam'
 
   do i = 0, ite_max
 
@@ -902,67 +903,73 @@ program darden
 
     !---calculation delC and delD @ this iteration---!
 
-    dC_n = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
-    dD_n = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
+    dC = - (F2D * F10 - F1D * F20) / (F1C * F2D - F1D * F2C)
+    dD = - (-F2C * F10 + F1C * F20) / (F1C * F2D - F1D * F2C)
 
-    write(*,*) 'delC =', dC_n
-    write(*,*) 'delD =', dD_n
+    write(*,*) 'delC =', dC
+    write(*,*) 'delD =', dD
 
     !Next lamda judgement. If next lam4 will be minus, dC have to be changed.
 
-    do j = 0, ite_max
-      C0_n = C0 + dC_n
-      A_n    = cal_A(C0_n, S, yf)
-      lam1_n = cal_lam1(A_n, yf, l)
-      lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
-      lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
-      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+    !do j = 0, ite_max
+      !C0_n = C0 + dC
+      !A_n    = cal_A(C0_n, S, yf)
+      !lam1_n = cal_lam1(A_n, yf, l)
+      !lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
+      !lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
+      !lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
 
-      if (lam4_n <= 0.0d0) then
-        dC_n = dC_n / 1.1d0
-        write(*,*) 'dC is changed'
-        write(*,*) 'delC =', dC_n
+      !if (lam4_n <= 0.0d0) then
+        !dC = dC / 1.1d0
+        !write(*,*) 'dC is changed'
+        !write(*,*) 'delC =', dC
 
-      else
-        exit
+      !else
+        !exit
 
-      end if
+      !end if
 
-    end do
+    !end do
 
     !---Output variables for result file @ current loop---!
 
-    write(30,*) i, dC_n, dD_n, C0, D0, lam4, lam
+    write(30,*) i, dC, dD, C0, D0, lam4, lam
 
     !---Convergence judgment---!
 
-    !abs(dC_n) < eps .and. abs(dD_n) < eps
-    !abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)
+    !abs(dC) < eps .and. abs(dD) < eps
+    !abs(dC) / abs(C0) < eps  .and. abs(dD) / abs(D0) < eps
+    
+    errC = abs(dC) / abs(C0)
+    errD = abs(dD) / abs(D0)
 
-    if (abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)) then
+    write(*,*) 'errC = ', errC
+    write(*,*) 'errD = ', errD
+
+    if (errC < eps .and. errD < eps) then
       write(*,*) ' '
       write(*,*) 'delD and delC is Converged!!!'
       write(*,*) 'Iteration number =', i+1
       exit
 
-    else if (abs(dC_n-dC) >= eps * abs(dC_n) .and. abs(dD_n-dD) >= eps * abs(dD_n)) then
-      C0 = C0 + dC_n
-      D0 = D0 + dD_n
+    else if (errC >= eps .and. errD >= eps) then
+      C0 = C0 + dC
+      D0 = D0 + dD
     
-    else if (abs(dC_n-dC) < eps * abs(dC_n) .and. abs(dD_n-dD) >= eps * abs(dD_n)) then
-      D0 = D0 + dD_n
+    else if (errC < eps .and. errD >= eps) then
+      D0 = D0 + dD
     
-    else if (abs(dC_n-dC) >= eps * abs(dC_n) .and. abs(dD_n-dD) < eps * abs(dD_n)) then
-      C0 = C0 + dC_n
+    else if (errC >= eps .and.errD < eps) then
+      C0 = C0 + dC
 
     else
-      write(*,*) 'dC = ', dC_n
-      write(*,*) 'dD = ', dD_n
+      write(*,*) 'dC = ', dC
+      write(*,*) 'dD = ', dD
       stop 'something is wrong !!'
     endif
 
-    dC = dC_n
-    dD = dD_n
+    dC = dC
+    dD = dD
 
   enddo
 
