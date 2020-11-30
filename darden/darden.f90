@@ -6,7 +6,7 @@
 
 !---module function of solve integral F1, F2---!
 
-module daikei_sekibun
+module Trapezoidal_integral
   implicit none
   contains
 
@@ -585,7 +585,7 @@ module daikei_sekibun
 
     end function F2_partialD
 
-end module daikei_sekibun
+end module Trapezoidal_integral
 
 module Darden_variable
   implicit none
@@ -739,7 +739,7 @@ end module Darden_variable
 !---main program of calculate Ffunc parameter---!
 
 program darden
-  use daikei_sekibun
+  use Trapezoidal_integral
   use Darden_variable
   implicit none
 
@@ -807,6 +807,7 @@ program darden
   write(*,*) 'C0 = ', C0
   write(*,*) 'D0 = ', D0
   write(*,*) 'epsilon = ', eps
+  write(*,*) 'division number = ', dn
 
 
   !---Newton method---!
@@ -910,25 +911,25 @@ program darden
 
     !Next lamda judgement. If next lam4 will be minus, dC have to be changed.
 
-    do j = 0, ite_max
-      C0_n = C0 + dC
-      A_n    = cal_A(C0_n, S, yf)
-      lam1_n = cal_lam1(A_n, yf, l)
-      lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
-      lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
-      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+    !do j = 0, ite_max
+      !C0_n = C0 + dC
+      !A_n    = cal_A(C0_n, S, yf)
+      !lam1_n = cal_lam1(A_n, yf, l)
+      !lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
+      !lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
+      !lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
 
-      if (lam4_n <= 0.0d0) then
-        dC = dC / 1.5d0
-        write(*,*) 'dC is changed'
-        write(*,*) 'delC =', dC
+      !if (lam4_n <= 0.0d0) then
+        !dC = dC / 1.1d0
+        !write(*,*) 'dC is changed'
+        !write(*,*) 'delC =', dC
 
-      else
-        exit
+      !else
+        !exit
 
-      end if
+      !end if
 
-    end do
+    !end do
 
     !---Output variables for result file @ current loop---!
 
