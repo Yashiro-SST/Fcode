@@ -523,27 +523,65 @@ module Trapezoidal_integral
     function Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn) result(QC4)
       real(8), intent(in) :: l, S, yf, lam, B, C0, D0, mu
       integer, intent(in) :: dn
-      real(8) dx, x, y, tc, sum, pi, QC4
+      real(8) dx, x, y, tc, sum1, sum2, pi, sp, QC4
       integer i, n
 
       pi = 2.0d0 * acos(0.0d0)
-      dx =  l / dble(dn) 
-      sum = 0.0d0
-      n = nint((l - lam) / dx)
+      sp = l - C0 / (S * mu)
+      dx =  l / dble(dn)
 
-      do i = 0, n-1
-        x = lam + dx * dble(i)
-        tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
-        y = (B * (x - yf) - D0) * tc
+      if (sp > lam) then
+        sum1 = 0.0d0
+        sum2 = 0.0d0 
+        n = nint((sp - lam) / dx)
 
-        if (i == 0 .or. i == n-1) then
-          sum = sum + 0.5d0 * y
-        else
-          sum = sum + y
-        end if
-      enddo
+        do i = 0, n-1
+          x = lam + dx * dble(i)
+          tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
+          y = (B * (x - yf) - D0) * tc
 
-      QC4 = - 2.0d0 / pi * sum * dx
+          if (i == 0 .or. i == n-1) then
+          sum1 = sum1 + 0.5d0 * y
+          else
+          sum1 = sum1 + y
+          end if
+        enddo
+
+        n = nint((l - sp) / dx)
+
+        do i = 1, n-1
+          x = sp + dx * dble(i)
+          tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
+          y = (B * (x - yf) - D0) * tc
+
+          if (i == 1 .or. i == n-1) then
+          sum2 = sum2 + 0.5d0 * y
+          else
+          sum2 = sum2 + y
+          end if
+        enddo
+
+        QC4 = - 2.0d0 / pi * (sum1 + sum2) * dx
+      
+      else if(sp <= lam) then
+        sum1 = 0.0d0
+        n = nint((l - lam) / dx)
+
+        do i = 0, n-1
+          x = lam + dx * dble(i)
+          tc = sqrt(S * mu * (l - x) / C0) / (2.0d0 * (C0 - S * mu * (l - x)))
+          y = (B * (x - yf) - D0) * tc
+
+          if (i == 0 .or. i == n-1) then
+          sum1 = sum1 + 0.5d0 * y
+          else
+          sum1 = sum1 + y
+          end if
+        enddo
+
+        QC4 = - 2.0d0 / pi * sum1 * dx
+
+      end if
 
     end function Q_partialC4
 
@@ -749,7 +787,7 @@ program darden
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0, dC, D0, dD
-  real(8) C0_n, D0_n, CaddD, A_n, lam1_n, lam2_n, lam3_n, lam4_n
+  real(8) C0_n, D0_n, CaddD, A_n, lam1_n, lam2_n, lam3_n, lam4_n, lam_n
   real(8) eps, errC, errD
   real(8) lyf, lyfh, lam1, lam2, lam3, lam4
   real(8) F10, F20, F1C, F2C, F1D, F2D
@@ -817,7 +855,7 @@ program darden
 
   do i = 0, ite_max
 
-    write(*,*) '_____________________________'
+    write(*,*) '__________________________________________________________'
 
     write(*,*) 'iteration' , i+1
     write(*,*) 'C0 = ', C0
@@ -836,9 +874,9 @@ program darden
 
     write(*,*) 'A = ', A
     write(*,*) 'yr = ', yr
-    write(*,*) 'lam1 = ', lam1
-    write(*,*) 'lam2 = ', lam2
-    write(*,*) 'lam3 = ', lam3
+    !write(*,*) 'lam1 = ', lam1
+    !write(*,*) 'lam2 = ', lam2
+    !write(*,*) 'lam3 = ', lam3
     write(*,*) 'lam4 = ', lam4
     write(*,*) 'lam = ', lam
 
@@ -850,24 +888,24 @@ program darden
     !---Calculation F10, F20, F1 partial CorD, and F2 partial CorD---!
 
     FYR_int1 = FYR_integral1(l, yf, yr, A, dn)
-    write(*,*) 'FYR_int1 = ', FYR_int1
+    !write(*,*) 'FYR_int1 = ', FYR_int1
     FYR_int2 = FYR_integral2(l, yf, yr, A, C0, dn)
-    write(*,*) 'FYR_int2 = ', FYR_int2
+    !write(*,*) 'FYR_int2 = ', FYR_int2
     FYR_int3 = FYR_integral3(l, yf, yr, lam, B, C0, dn)
-    write(*,*) 'FYR_int3 = ', FYR_int3
+    !write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
-    write(*,*) 'FYR_int4 = ', FYR_int4
+    !write(*,*) 'FYR_int4 = ', FYR_int4
     F10 = F1initial(l, S, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
     write(*,*) 'F10 = ', F10
 
     FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
-    write(*,*) 'FYR_partialC1 = ', FYR_C1
+    !write(*,*) 'FYR_partialC1 = ', FYR_C1
     FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
-    write(*,*) 'FYR_partialC2 = ', FYR_C2
+    !write(*,*) 'FYR_partialC2 = ', FYR_C2
     FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    write(*,*) 'FYR_partialC3 = ', FYR_C3
+    !write(*,*) 'FYR_partialC3 = ', FYR_C3
     FYR_C4 = FYR_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
-    write(*,*) 'FYR_partialC4 = ', FYR_C4
+    !write(*,*) 'FYR_partialC4 = ', FYR_C4
     F1C = F1_partialC(l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
     write(*,*) 'F1C = ', F1C
@@ -876,24 +914,24 @@ program darden
     write(*,*) 'F1D = ', F1D
     
     Q1 = Qterm1(l, yf, yr, A, dn)
-    write(*,*) 'Qterm1 = ', Q1
+    !write(*,*) 'Qterm1 = ', Q1
     Q2 = Qterm2(l, yf, yr, A, C0, dn)
-    write(*,*) 'Qterm2 = ', Q2
+    !write(*,*) 'Qterm2 = ', Q2
     Q3 = Qterm3(l, yf, yr, lam, B, C0, dn)
-    write(*,*) 'Qterm3 = ', Q3
+    !write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
-    write(*,*) 'Qterm4 = ', Q4
+    !write(*,*) 'Qterm4 = ', Q4
     F20 = F2initial(l, S, yf, yr, B, D0, Q1, Q2, Q3, Q4)
     write(*,*) 'F20 = ', F20
 
     QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
-    write(*,*) 'QC1 = ', QC1
+    !write(*,*) 'QC1 = ', QC1
     QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
-    write(*,*) 'QC2 = ', QC2
+    !write(*,*) 'QC2 = ', QC2
     QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
-    write(*,*) 'QC3 = ', QC3
+    !write(*,*) 'QC3 = ', QC3
     QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
-    write(*,*) 'QC4 = ', QC4
+    !write(*,*) 'QC4 = ', QC4
     F2C = F2_partialC(l, S, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4)
     write(*,*) 'F2C = ', F2C
 
@@ -908,10 +946,12 @@ program darden
 
     write(*,*) 'delC =', dC
     write(*,*) 'delD =', dD
+    write(*,*) ' '
 
-    !Next lamda judgement. If next lam4 will be minus, dC have to be changed.
+    !Next lamda judgement. If next lam4 will be minus, dC dD have to be changed.
 
-    do j = 0, ite_max
+    do j = 0, 100
+      write(*,*) 'lamda-judge-iteration =', j+1
       C0_n = C0 + dC
       D0_n = D0 + dD
       CaddD = C0_n + D0_n
@@ -920,31 +960,41 @@ program darden
       lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
       lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
       lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+      lam_n  = cal_lam(l, lam4, C0_n , D0_n)
+      write(*,*) 'C0_n =', C0_n
+      write(*,*) 'D0_n =', D0_n
+      write(*,*) 'lam4_n =', lam4_n
+      write(*,*) 'lam_n =', lam_n
+      write(*,*) 'Cn + Dn = ', CaddD
 
-      if (lam4_n <= 0.0d0) then
+      if (C0_n < 0.0d0) then
+        write(*,*) '!!!---------------next_C will be minus---------------!!!'
+        dC = - 0.10d0 * dC 
+        write(*,*) 'dC is changed'
+        write(*,*) 'delC =', dC
+      
+      else if (C0_n >= 0.0d0 .and. lam4_n <= 0.0d0) then
+        write(*,*) '!!!--------------next_lam4 will be minus-------------!!!'
         dC = - 0.010d0 * dC 
         write(*,*) 'dC is changed'
         write(*,*) 'delC =', dC
 
-      else if (lam4_n > 0.0d0 .and. CaddD < 0.0d0) then
-        if (C0_n < 0.0d0 .and. D0_n >= 0.0d0) then
-        
-        else if(C0_n < 0.0d0 .and. D0_n < 0.0d0) then
-
-        else if(C0_n >= 0.0d0 .and. D0_n < 0.0d0) then
-        
-        end if
-
+      else if (lam4_n > 0.0d0 .and. D0_n < - C0_n) then
+        write(*,*) '!!!------lam4 is OK, but next_C+D will be minus------!!!'
+        dD =  - dD
+        write(*,*) 'dD is changed'
+        write(*,*) 'delD =', dD
+      
       else
         exit
-
+      
       end if
 
     end do
 
     !---Output variables for result file @ current loop---!
 
-    write(30,*) i, dC, dD, C0, D0, lam4, lam
+    write(30,*) i+1, dC, dD, C0, D0, lam4, lam
 
     !---Convergence judgment---!
 
@@ -958,8 +1008,11 @@ program darden
     write(*,*) 'errD = ', errD
 
     if (errC < eps .and. errD < eps) then
+      C0 = C0 + dC
+      D0 = D0 + dD
       write(*,*) ' '
-      write(*,*) 'delD and delC is Converged!!!'
+      write(*,*) '__________________________________________________________'
+      write(*,*) 'delD and delC is Converged !!!'
       write(*,*) 'Iteration number =', i+1
       exit
 
@@ -981,6 +1034,11 @@ program darden
 
     dC = dC
     dD = dD
+
+    if(i == ite_max) then
+      write(*,*) ' '
+      write(*,*) '!!!!!----------Iteration time out...----------!!!!!'
+    end if
 
   enddo
 
