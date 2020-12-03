@@ -948,7 +948,7 @@ program darden
     write(*,*) 'delD =', dD
     write(*,*) ' '
 
-    !Next lamda judgement. If next lam4 will be minus, dC dD have to be changed.
+    !Next lamda judgement. If next lam will be Complex number, dC dD must be changed.
 
     do j = 0, 100
       write(*,*) 'lamda-judge-iteration =', j+1
