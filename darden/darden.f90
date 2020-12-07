@@ -1096,6 +1096,10 @@ program darden
   write(20,*) '  !---paramater yr(%)---!'
   write(20,'(f16.10)', advance = 'no') Ae_l
   write(20,*) '  !---calculation result of Ae @x=l---!'
+  write(20,'(f16.10)', advance = 'no') S
+  write(20,*) '  !---slope of balancing point---!'
+  write(20,'(i5)', advance = 'no') i
+  write(20,*) '  !---Iteration number of calculation---!'
 
 
   close(20)
