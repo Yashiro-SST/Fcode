@@ -10,11 +10,11 @@ module Darden_variable
 
     end function cal_beta
 
-    function cal_ainf(gamma, R, T_inf, AMW) Result(a_inf)
-      real(8), intent(in) :: gamma, R, T_inf, AMW
+    function cal_ainf(gamma, R, T_inf) Result(a_inf)
+      real(8), intent(in) :: gamma, R, T_inf
       real(8) a_inf
 
-      a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
+      a_inf = sqrt(abs(gamma * R * T_inf))
 
     end function cal_ainf
 
@@ -41,6 +41,21 @@ module Darden_variable
       S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
 
     end function cal_S
+
+
+
+
+
+    function cal_S2() Results(S2)
+
+
+      
+    
+    end function cal_S2
+
+
+
+
 
     function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
       real(8), intent(in) :: beta, W, rho_inf, u_inf
