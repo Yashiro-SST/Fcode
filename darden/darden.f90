@@ -784,7 +784,7 @@ program darden
   !---Variable definition---!
 
   real(8) A, C, D, lam, yr
-  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf, AMW
+  real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf
   real(8) S, k, beta, u_inf, a_inf, Ae_l
   real(8) C0, dC, D0, dD
   real(8) C0_n, D0_n, CaddD, A_n, lam1_n, lam2_n, lam3_n, lam4_n, lam_n
@@ -804,7 +804,7 @@ program darden
   read(10,*) M_inf, h_inf        !---Mach number, Flight height
   read(10,*) W, l, yf            !---Weight, Effective length, yf position (%)
   read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
-  read(10,*) gamma, R, AMW       !---Specific heat ratio，Gas constant, Average molecular weight
+  read(10,*) gamma, R            !---Specific heat ratio，Gas constant(Air)
   read(10,*) C0, D0              !---initial C, D
   read(10,*) dn                  !---Division number @ integral
   read(10,*) ite_max             !---Maximum number of iterations
@@ -969,9 +969,15 @@ program darden
 
       if (C0_n < 0.0d0) then
         write(*,*) '!!!---------------next_C will be minus---------------!!!'
-        dC = - 0.10d0 * dC 
+        dC = - 0.20d0 * dC 
         write(*,*) 'dC is changed'
         write(*,*) 'delC =', dC
+      
+      else if (D0_n < 0.0d0) then
+          write(*,*) '!!!---------------next_D will be minus---------------!!!'
+          dD = - 0.20d0 * dD 
+          write(*,*) 'dD is changed'
+          write(*,*) 'delD =', dD
       
       else if (C0_n >= 0.0d0 .and. lam4_n <= 0.0d0) then
         write(*,*) '!!!--------------next_lam4 will be minus-------------!!!'
@@ -979,11 +985,11 @@ program darden
         write(*,*) 'dC is changed'
         write(*,*) 'delC =', dC
 
-      else if (lam4_n > 0.0d0 .and. D0_n < - C0_n) then
-        write(*,*) '!!!------lam4 is OK, but next_C+D will be minus------!!!'
-        dD =  - dD
-        write(*,*) 'dD is changed'
-        write(*,*) 'delD =', dD
+      !else if (lam4_n > 0.0d0 .and. D0_n < - C0_n) then
+        !write(*,*) '!!!------lam4 is OK, but next_C+D will be minus------!!!'
+        !dD =  -  dD
+        !write(*,*) 'dD is changed'
+        !write(*,*) 'delD =', dD
       
       else
         exit
