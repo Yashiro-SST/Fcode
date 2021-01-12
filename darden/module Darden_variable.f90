@@ -42,14 +42,29 @@ module Darden_variable
 
     end function cal_S
 
+    function cal_S2(gamma, M_inf, beta, dn) Results(S2)
+      real(8), intent(in) :: gamma, M_inf, beta
+      real(8) S2, gamma_l, sum, S2_int
+      integer, intent(in) :: dn
+      integer i, n
 
+      gamma_l = (gamma + 1) / 2
 
+      do i = 0, n
+        x = dx * dble(i)
+        K = sqrt(l - x) / (yr - x)
+        y = 2.0d0 * x / yf * A * K
 
+        if (i == 0 .or. i ==n) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
 
-    function cal_S2() Results(S2)
+      S2_int = sum * dx
 
-
-      
+      S2 = sqrt(2.0d0 * beta) / (gamma_l * M_inf**3.0d0 * S2_int)
     
     end function cal_S2
 
