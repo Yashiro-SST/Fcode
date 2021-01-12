@@ -42,7 +42,7 @@ module Darden_variable
 
     end function cal_S
 
-    function cal_S2(gamma, M_inf, beta, dn) Results(S2)
+    function cal_S2(gamma, M_inf, beta, dn) Result(S2)
       real(8), intent(in) :: gamma, M_inf, beta
       real(8) S2, gamma_l, sum, S2_int
       integer, intent(in) :: dn
