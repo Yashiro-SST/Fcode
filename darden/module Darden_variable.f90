@@ -48,18 +48,18 @@ module Darden_variable
       integer, intent(in) :: dn
       integer i, n
 
-      gamma_l = (gamma + 1) / 2
+     ! gamma_l = (gamma + 1) / 2
 
       do i = 0, n
-        x = dx * dble(i)
-        K = sqrt(l - x) / (yr - x)
-        y = 2.0d0 * x / yf * A * K
+      !  x = dx * dble(i)
+      !  K = sqrt(l - x) / (yr - x)
+      !  y = 2.0d0 * x / yf * A * K
 
-        if (i == 0 .or. i ==n) then
-          sum = sum + 0.5d0 * y
-        else
-          sum = sum + y
-        end if
+      !  if (i == 0 .or. i ==n) then
+      !    sum = sum + 0.5d0 * y
+       ! else
+      !    sum = sum + y
+      !  end if
       enddo
 
       S2_int = sum * dx
@@ -67,10 +67,6 @@ module Darden_variable
       S2 = sqrt(2.0d0 * beta) / (gamma_l * M_inf**3.0d0 * S2_int)
     
     end function cal_S2
-
-
-
-
 
     function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
       real(8), intent(in) :: beta, W, rho_inf, u_inf
@@ -80,7 +76,7 @@ module Darden_variable
       if (unit == 1) then
         g = 9.80665
       else if (unit == 0) then
-        g = 32.17405
+        g = g * 3.28084
       else
         stop 'cal_Ae error, invalid unit system number is entered!!!'
       end if
