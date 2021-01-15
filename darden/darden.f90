@@ -637,18 +637,11 @@ module Darden_variable
 
     end function cal_beta
 
-    function cal_ainf(gamma, R, T_inf, AMW, unit) Result(a_inf)
-      real(8), intent(in) :: gamma, R, T_inf, AMW
+    function cal_ainf(gamma, R, T_inf) Result(a_inf)
+      real(8), intent(in) :: gamma, R, T_inf
       real(8) a_inf
-      integer, intent(in) :: unit
 
-      if (unit == 1) then
-        a_inf = sqrt(abs(gamma * R * T_inf / (AMW * 0.001)))
-      else if (unit == 0) then
-        a_inf = 968.0741
-      else
-        stop 'cal_a error, invalid unit system number is entered!!!'
-      end if
+      a_inf = sqrt(abs(gamma * R * T_inf))
 
     end function cal_ainf
 
@@ -668,22 +661,38 @@ module Darden_variable
 
     end function cal_k
 
-    function cal_S(k, h_inf, l, unit) Result(S)
+    function cal_S(k, h_inf, l) Result(S)
       real(8), intent(in) :: k, h_inf, l
       real(8) S
-      integer, intent(in) :: unit
 
-      if (unit == 1) then
-        S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
-      else if (unit == 0) then
-        S = 0.00026967727
-      else
-        stop 'cal_S error, invalid unit system number is entered!!!'
-      end if
+      S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
 
     end function cal_S
 
-    function cal_Ae_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
+    function cal_S2(gamma, M_inf, beta, dn) Result(S2)
+      real(8), intent(in) :: gamma, M_inf, beta
+      real(8) S2, gamma_l, sum, S2_int
+      integer, intent(in) :: dn
+      integer i, n
+
+    !  gamma_l = (gamma + 1) / 2
+
+    !  do i = 0, n
+
+      !  if (i == 0 .or. i ==n) then
+         ! sum = sum + 0.5d0 * y
+        !else
+          !sum = sum + y
+       ! end if
+      !enddo
+
+      !S2_int = sum * dx
+
+     ! S2 = sqrt(2.0d0 * beta) / (gamma_l * M_inf**3.0d0 * S2_int)
+    
+    end function cal_S2
+
+    function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
       real(8), intent(in) :: beta, W, rho_inf, u_inf
       real(8) g, Ae_l
       integer, intent(in) :: unit
@@ -698,7 +707,7 @@ module Darden_variable
 
       Ae_l = beta * W * g /(rho_inf * u_inf**2.0d0)
 
-    end function cal_Ae_l
+    end function cal_Se_l
 
     function cal_A(C0, S, yf) Result(A)
       real(8), intent(in) :: C0, S, yf
@@ -771,8 +780,8 @@ module Darden_variable
       lam = l - (3.0d0 * (lam4) / (8.0d0 * (C0 + D0))) ** (2.0d0 / 3.0d0)
 
     end function cal_lam
-
-end module Darden_variable
+  
+  end module Darden_variable
 
 !---main program of calculate Ffunc parameter---!
 
@@ -816,11 +825,11 @@ program darden
   !---Calculate Known function---!
 
   beta  = cal_beta(M_inf)
-  a_inf = cal_ainf(gamma, R, T_inf, AMW, unit)
+  a_inf = cal_ainf(gamma, R, T_inf)
   u_inf = cal_u(M_inf, a_inf)
   k     = cal_k(gamma, M_inf, beta)
-  S     = cal_S(k, h_inf, l, unit)
-  Ae_l  = cal_Ae_l(beta, W, rho_inf, u_inf, unit)
+  S     = cal_S(k, h_inf, l)
+  Ae_l  = cal_Se_l(beta, W, rho_inf, u_inf, unit)
 
   !---Output---!
 
@@ -835,7 +844,6 @@ program darden
   write(*,*) 'T = ', T_inf
   write(*,*) 'gamma = ', gamma
   write(*,*) 'R = ', R
-  write(*,*) 'AMW = ', AMW
   write(*,*) 'beta = ', beta
   write(*,*) 'a_inf = ', a_inf
   write(*,*) 'u_inf = ', u_inf
@@ -1066,7 +1074,6 @@ program darden
   write(*,*) 'T = ', T_inf
   write(*,*) 'gamma = ', gamma
   write(*,*) 'R = ', R
-  write(*,*) 'AMW = ', AMW
   write(*,*) 'beta = ', beta
   write(*,*) 'a_inf = ', a_inf
   write(*,*) 'u_inf = ', u_inf
