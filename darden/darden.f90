@@ -625,6 +625,8 @@ module Trapezoidal_integral
 
 end module Trapezoidal_integral
 
+!---module function of calculate various variables---!
+
 module Darden_variable
   implicit none
   contains
@@ -637,11 +639,18 @@ module Darden_variable
 
     end function cal_beta
 
-    function cal_ainf(gamma, R, T_inf) Result(a_inf)
+    function cal_ainf(gamma, R, T_inf, unit) Result(a_inf)
       real(8), intent(in) :: gamma, R, T_inf
       real(8) a_inf
-
-      a_inf = sqrt(abs(gamma * R * T_inf))
+      integer, intent(in) :: unit
+      
+      if (unit == 1) then
+        a_inf = sqrt(abs(gamma * R * T_inf))
+      else if (unit == 0) then
+        a_inf = sqrt(abs(gamma * R * T_inf)) * 3.28084
+      else
+        stop 'cal_a error, invalid unit system number is entered!!!'
+      end if
 
     end function cal_ainf
 
@@ -661,35 +670,126 @@ module Darden_variable
 
     end function cal_k
 
-    function cal_S(k, h_inf, l) Result(S)
+    function cal_S(k, h_inf, l, unit) Result(S)
       real(8), intent(in) :: k, h_inf, l
       real(8) S
+      integer, intent(in) :: unit
 
-      S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
+      if (unit == 1) then
+        S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
+      else if (unit == 0) then
+        S = 0.00026967727
+      else
+        stop 'cal_S error, invalid unit system number is entered!!!'
+      end if
 
     end function cal_S
 
-    function cal_S2(gamma, M_inf, beta, dn) Result(S2)
-      real(8), intent(in) :: gamma, M_inf, beta
-      real(8) S2, gamma_l, sum, S2_int
-      integer, intent(in) :: dn
-      integer i, n
+    !function cal_S(k, h_inf, l) Result(S)
+      !real(8), intent(in) :: k, h_inf, l
+     ! real(8) S
 
-    !  gamma_l = (gamma + 1) / 2
+     !S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
 
-    !  do i = 0, n
+    !end function cal_S
 
-      !  if (i == 0 .or. i ==n) then
-         ! sum = sum + 0.5d0 * y
-        !else
-          !sum = sum + y
-       ! end if
-      !enddo
+    function cal_S2(gamma, M_inf, beta, u_inf, h_inf, R, dn, unit) Result(S2)
+      real(8), intent(in) :: gamma, M_inf, beta, u_inf, h_inf, R
+      real(8) gamma_l, sum, Tc, zc, T_slope, Mh, Th, g, dz, z_sp, x, y, z
+      real(8) T_z, Ma_z, beta_z, rt_ratio, p_ratio, rho_ratio, T_ratio
+      real(8) ray_int, S2_int, S2
+      integer, intent(in) :: dn, unit
+      integer i, j
 
-      !S2_int = sum * dx
+      Tc = 216.65        !---temparature of Stratosphere
+      if (unit == 1) then
+        T_slope = 0.0065          !---difference of temparature[K] per a hight[m]
+      else if (unit == 0) then
+        T_slope = 0.0065 / 3.28084
+      else
+        stop 'cal_T_slope error, invalid unit system number is entered!!!'
+      end if
 
-     ! S2 = sqrt(2.0d0 * beta) / (gamma_l * M_inf**3.0d0 * S2_int)
-    
+      if (unit == 1) then
+        zc = 11000          !---hight of top of Troposphere / bottom of Stratosphere
+      else if (unit == 0) then
+        zc = 11000 * 3.28084
+      else
+        stop 'cal_zc error, invalid unit system number is entered!!!'
+      end if
+      
+      Mh = M_inf         !---if hight where cal initial wave form is higher from zc 
+      Th = Tc            !---same as above
+      gamma_l = (gamma + 1) / 2
+
+      !---integral in the ray tube ratio formura---!
+
+      dz = h_inf / dn
+      z_sp = h_inf - zc
+      sum = 0.0d0
+
+      do j = 0, dn
+        !---z is vertical distance of signal from airplane axis---!
+        z = dz * dble(j)
+        if (0 <= z .and. z <= z_sp) then               !---temparature value at Stratospere
+          T_z = Tc
+        else if (z_sp < z .and. z <= h_inf) then       !---temparature value at Troposphere
+          T_z = Tc + T_slope * z
+        else 
+          stop 'cal_S2 error, variable z is out of range !!!'
+        end if
+        
+        Ma_z = u_inf / sqrt(abs(gamma * R * T_z))   !---cal. Mach number @ z in this loop
+        y = 1.0d0 / ((Ma_z**2.0d0 - 1.0d0)**0.50d0) !---cal. integration in ray tube formura
+
+        if (i == 0 .or. i ==dn) then
+          sum = sum + 0.5d0 * y
+        else
+          sum = sum + y
+        end if
+      enddo
+
+      ray_int = sum * dz
+
+      !---integral in the S2 formura---!
+
+      sum = 0.0d0   !---zero clear---!
+      z = 0.0d0
+      y = 0.0d0
+      !dz = h_inf / dn
+      !z_sp = h_inf - zc
+
+      do i = 0, dn
+        z = dz * dble(i)
+        if (0 <= z .and. z <= z_sp) then             !---temparature value at Stratospere
+          T_z = Tc
+        else if (z_sp < z .and. z <= h_inf) then     !---temparature value at Troposphere
+          T_z = Tc + T_slope * z
+        else 
+          stop 'cal_S2 error, variable z is out of range !!!'
+        end if
+        Ma_z = u_inf / sqrt(abs(gamma * R * T_z))    !---cal. Mach number @ z in this loop
+        beta_z = sqrt(abs(Ma_z**2.0d0 - 1.0d0))      !---cal. beta @z in this loop
+
+        rt_ratio = (M_inf * (1.0d0 - 1.0d0 / Ma_z**2.0d0)**0.5d0 * ray_int)**(-1.0d0)                         !---
+        p_ratio = exp(g * (z - zc) / (R * Tc))       
+        rho_ratio = exp(- g * (z - zc) / (R * Tc))   
+        T_ratio = sqrt(Th / T_z)
+
+        x = p_ratio * (rho_ratio * T_ratio)**0.5d0 * (rt_ratio)**0.5d0 * Ma_z / beta_z
+
+        if (i == 0 .or. i ==dn) then
+          sum = sum + 0.5d0 * x
+        else
+          sum = sum + x
+        end if
+      enddo
+
+      S2_int = sum * dz
+
+      !---calculate Slope of balancing line (limit of parameter B)---!
+      S2 = sqrt(2.0d0 * beta) / (gamma_l * Mh**3.0d0 * S2_int)
+
     end function cal_S2
 
     function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
@@ -700,7 +800,7 @@ module Darden_variable
       if (unit == 1) then
         g = 9.80665
       else if (unit == 0) then
-        g = 32.17405
+        g = 9.80665 * 3.28084
       else
         stop 'cal_Ae error, invalid unit system number is entered!!!'
       end if
@@ -794,7 +894,7 @@ program darden
 
   real(8) A, C, D, lam, yr
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf
-  real(8) S, k, beta, u_inf, a_inf, Ae_l
+  real(8) S, S2, k, beta, u_inf, a_inf, Ae_l
   real(8) C0, dC, D0, dD
   real(8) C0_n, D0_n, CaddD, A_n, lam1_n, lam2_n, lam3_n, lam4_n, lam_n
   real(8) eps, errC, errD
@@ -825,10 +925,11 @@ program darden
   !---Calculate Known function---!
 
   beta  = cal_beta(M_inf)
-  a_inf = cal_ainf(gamma, R, T_inf)
+  a_inf = cal_ainf(gamma, R, T_inf, unit)
   u_inf = cal_u(M_inf, a_inf)
   k     = cal_k(gamma, M_inf, beta)
-  S     = cal_S(k, h_inf, l)
+  S     = cal_S(k, h_inf, l, unit)
+  S2    = cal_S2(gamma, M_inf, beta, u_inf, h_inf, R, dn, unit)
   Ae_l  = cal_Se_l(beta, W, rho_inf, u_inf, unit)
 
   !---Output---!
@@ -849,6 +950,7 @@ program darden
   write(*,*) 'u_inf = ', u_inf
   write(*,*) 'k = ', k
   write(*,*) 's = ', s
+  write(*,*) 's2 = ', S2
   write(*,*) 'Ae_l = ', Ae_l
   write(*,*) 'C0 = ', C0
   write(*,*) 'D0 = ', D0
@@ -1079,6 +1181,7 @@ program darden
   write(*,*) 'u_inf = ', u_inf
   write(*,*) 'k = ', k
   write(*,*) 's = ', s
+  write(*,*) 's2 = ', s2
   write(*,*) 'Ae_l = ', Ae_l
 
   write(*,*) 'A = ', A
@@ -1111,6 +1214,8 @@ program darden
   write(20,*) '  !---calculation result of Ae @x=l---!'
   write(20,'(f16.10)', advance = 'no') S
   write(20,*) '  !---slope of balancing point---!'
+  write(20,'(f16.10)', advance = 'no') S2
+  write(20,*) '  !---slope of balancing point 2---!'
   write(20,'(i5)', advance = 'no') i
   write(20,*) '  !---Iteration number of calculation---!'
 
