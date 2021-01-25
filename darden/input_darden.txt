@@ -1,10 +1,10 @@
 1.0d0 0.0d0                 !--front/rear shock ratio, sig paramata B
 1.4d0 13800d0               !--Mach number, Flight height
-20000d0 35.0d0 3.0d0   !--Weight, Effective length, nose length
+20000d0 35.0d0 1.5d0   !--Weight, Effective length, nose length
 0.235124d0 216.650d0        !--density, Tenparature @Flight height
 1.4d0 287.042               !--Specific heat ratio，Gas constant
-0.1d0 0.1d0               !--initial C0, D0
-1000                        !--Division number (from zero to l)
+0.09d0 0.09d0               !--initial C0, D0
+5000                        !--Division number (from zero to l)
 5000                        !--Maximum number of iterations
 1                           !---Unit System Change yardpond/Darden(0).or.MKS(1)
 1.0E-3                      !---allowable error "epsilon"
