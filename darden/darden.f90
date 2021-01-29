@@ -792,9 +792,9 @@ module Darden_variable
 
     end function cal_S2
 
-    function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
+    function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Se_l)
       real(8), intent(in) :: beta, W, rho_inf, u_inf
-      real(8) g, Ae_l
+      real(8) g, Se_l
       integer, intent(in) :: unit
 
       if (unit == 1) then
@@ -805,9 +805,25 @@ module Darden_variable
         stop 'cal_Ae error, invalid unit system number is entered!!!'
       end if
 
-      Ae_l = beta * W * g /(rho_inf * u_inf**2.0d0)
+      Se_l = beta * W * g /(rho_inf * u_inf**2.0d0)
 
     end function cal_Se_l
+
+    function set_B(Sn, percen, sig) Result(B)
+      real(8), intent(in) ::Sn, percen
+      real(8) B
+      integer, intent(in) :: sig
+      
+      if (sig == 0) then
+        B = 0.0d0
+      else if (sig == 1) then
+        B = percen * Sn
+      else
+        stop 'set_B error! please check sig is integer. percen less than 1. '
+      end if
+    
+    end function set_B
+
 
     function cal_A(C0, S, yf) Result(A)
       real(8), intent(in) :: C0, S, yf
@@ -865,11 +881,11 @@ module Darden_variable
 
     end function cal_lam3
 
-    function cal_lam4(lam1, lam2, lam3, Ae_l) Result(lam4)
-      real(8), intent(in) :: lam1, lam2, lam3, Ae_l
+    function cal_lam4(lam1, lam2, lam3, Se_l) Result(lam4)
+      real(8), intent(in) :: lam1, lam2, lam3, Se_l
       real(8) lam4
 
-      lam4 = lam1 + lam2 + lam3 - Ae_l
+      lam4 = lam1 + lam2 + lam3 - Se_l
 
     end function cal_lam4
 
@@ -881,7 +897,7 @@ module Darden_variable
 
     end function cal_lam
   
-  end module Darden_variable
+end module Darden_variable
 
 !---main program of calculate Ffunc parameter---!
 
@@ -894,7 +910,7 @@ program darden
 
   real(8) A, C, D, lam, yr
   real(8) B, mu, yf, W, gamma, M_inf, h_inf, l, R, T_inf, rho_inf
-  real(8) S, S2, k, beta, u_inf, a_inf, Ae_l
+  real(8) S, S2, Sn, k, beta, u_inf, a_inf, Se_l, percen
   real(8) C0, dC, D0, dD
   real(8) C0_n, D0_n, CaddD, A_n, lam1_n, lam2_n, lam3_n, lam4_n, lam_n
   real(8) eps, errC, errD
@@ -904,17 +920,26 @@ program darden
   real(8) FYR_C1, FYR_C2, FYR_C3, FYR_C4
   real(8) Q1, Q2, Q3, Q4
   real(8) QC1, QC2, QC3, QC4
-  integer dn, i, j, ite_max, unit
+  integer dn, i, j, ite_max, sig, unit, Scal
 
   !---Reading paramator---!
   open(10,file='input_darden.txt')
 
-  read(10,*) mu, B               !---front/rear shock ratio, sig paramata B
-  read(10,*) M_inf, h_inf        !---Mach number, Flight height
-  read(10,*) W, l, yf            !---Weight, Effective length, yf position (%)
-  read(10,*) rho_inf, T_inf      !---density, Tenparature @Flight height
-  read(10,*) gamma, R            !---Specific heat ratio，Gas constant(Air)
-  read(10,*) C0, D0              !---initial C, D
+  read(10,*) mu                  !---front/rear shock ratio
+  read(10,*) sig                 !---0:minimum-overpressure signature, 1:minimum-shock
+  read(10,*) percen              !---if M.S.sig, B = percen * S 
+  read(10,*) Scal                !---0:S calc on Isothermal atmosphere, 1: Real atmosphere
+  read(10,*) M_inf               !---Mach number
+  read(10,*) h_inf               !---Flight height
+  read(10,*) W                   !---Weight
+  read(10,*) l                   !---Effective length
+  read(10,*) yf                  !---yf position
+  read(10,*) rho_inf             !---density @Flight height
+  read(10,*) T_inf               !---Tenparature @Flight height
+  read(10,*) gamma               !---Specific heat ratio
+  read(10,*) R                   !---Gas constant(Air)
+  read(10,*) C0                  !---initial C
+  read(10,*) D0                  !---initial D
   read(10,*) dn                  !---Division number @ integral
   read(10,*) ite_max             !---Maximum number of iterations
   read(10,*) unit                !---Unit System Change yardpond(0), MKS(1)
@@ -922,7 +947,33 @@ program darden
 
   close(10)
 
+  !---Output input data---!
+
+  write(*,*) '-----------------------input data-------------------------'
+
+  write(*,*) 'mu = ', mu
+  write(*,*) 'sig = ', sig
+  write(*,*) 'percen = ', percen
+  write(*,*) 'Scal = ', Scal
+  write(*,*) 'M_inf = ', M_inf
+  write(*,*) 'h_inf = ', h_inf
+  write(*,*) 'W = ', W
+  write(*,*) 'l = ', l
+  write(*,*) 'yf = ', yf
+  write(*,*) 'rho_inf = ', rho_inf
+  write(*,*) 'T_inf = ', T_inf
+  write(*,*) 'gamma = ', gamma
+  write(*,*) 'R = ', R
+  write(*,*) 'C0 = ', C0
+  write(*,*) 'D0 = ', D0
+  write(*,*) 'dn = ', dn
+  write(*,*) 'ite_max = ', ite_max
+  write(*,*) 'unit = ', unit
+  write(*,*) 'eps = ', eps
+
   !---Calculate Known function---!
+
+  write(*,*) '---------------------Known function---------------------------'
 
   beta  = cal_beta(M_inf)
   a_inf = cal_ainf(gamma, R, T_inf, unit)
@@ -930,35 +981,30 @@ program darden
   k     = cal_k(gamma, M_inf, beta)
   S     = cal_S(k, h_inf, l, unit)
   S2    = cal_S2(gamma, M_inf, beta, u_inf, h_inf, R, dn, unit)
-  Ae_l  = cal_Se_l(beta, W, rho_inf, u_inf, unit)
+  Se_l  = cal_Se_l(beta, W, rho_inf, u_inf, unit)
+  
+  if(Scal == 0) then
+    Sn = S
+  else if(Scal ==1) then
+    Sn = S2
+  end if
 
-  !---Output---!
+  B = set_B(Sn, percen, sig)
 
-  write(*,*) 'mu = ', mu
-  write(*,*) 'B = ', B
-  write(*,*) 'M = ', M_inf
-  write(*,*) 'h = ', h_inf
-  write(*,*) 'W = ', W
-  write(*,*) 'l = ', l
-  write(*,*) 'yf(%) = ', yf
-  write(*,*) 'rho = ', rho_inf
-  write(*,*) 'T = ', T_inf
-  write(*,*) 'gamma = ', gamma
-  write(*,*) 'R = ', R
+  !---Output known function---!
+
   write(*,*) 'beta = ', beta
   write(*,*) 'a_inf = ', a_inf
   write(*,*) 'u_inf = ', u_inf
   write(*,*) 'k = ', k
-  write(*,*) 's = ', s
-  write(*,*) 's2 = ', S2
-  write(*,*) 'Ae_l = ', Ae_l
-  write(*,*) 'C0 = ', C0
-  write(*,*) 'D0 = ', D0
-  write(*,*) 'epsilon = ', eps
-  write(*,*) 'division number = ', dn
-
+  write(*,*) 'S = ', S
+  write(*,*) 'S2 = ', S2
+  write(*,*) 'Se_l = ', Se_l
+  write(*,*) 'B = ' , B
 
   !---Newton method---!
+
+  write(*,*) '-------------------Newton loop started-----------------------------'
 
   open(30, file='result.txt')
   write(30,*) 'i,   dC,   dD,   C0,   D0,   lam4,   lam'
@@ -972,14 +1018,14 @@ program darden
     write(*,*) 'D0 = ', D0
 
     !---Calculate unknown funcion---!
-    A    = cal_A(C0, S, yf)
-    yr   = cal_yr(l, C0, S, mu)
+    A    = cal_A(C0, Sn, yf)
+    yr   = cal_yr(l, C0, Sn, mu)
     lyf  = cal_lyf(l, yf)
     lyfh = cal_lyfh(l, yf)
     lam1 = cal_lam1(A, yf, l)
     lam2 = cal_lam2(A, C0, yf, lyfh)
     lam3 = cal_lam3(A, B, C0, yf, lyf)
-    lam4 = cal_lam4(lam1, lam2, lam3, Ae_l)
+    lam4 = cal_lam4(lam1, lam2, lam3, Se_l)
     lam  = cal_lam(l, lam4,C0, D0)
 
     write(*,*) 'A = ', A
@@ -1005,18 +1051,18 @@ program darden
     !write(*,*) 'FYR_int3 = ', FYR_int3
     FYR_int4 = FYR_integral4(l, yf, yr, lam, B, D0, dn)
     !write(*,*) 'FYR_int4 = ', FYR_int4
-    F10 = F1initial(l, S, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
+    F10 = F1initial(l, Sn, yf, yr, B, D0, FYR_int1, FYR_int2, FYR_int3, FYR_int4)
     write(*,*) 'F10 = ', F10
 
-    FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, S, mu, dn)
+    FYR_C1 = FYR_partialC1(l, yf, yr, A, C0, Sn, mu, dn)
     !write(*,*) 'FYR_partialC1 = ', FYR_C1
-    FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, S, mu, dn)
+    FYR_C2 = FYR_partialC2(l, yf, yr, A, C0, Sn, mu, dn)
     !write(*,*) 'FYR_partialC2 = ', FYR_C2
-    FYR_C3 = FYR_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    FYR_C3 = FYR_partialC3(l, Sn, yf, yr, lam, B, C0, mu, dn)
     !write(*,*) 'FYR_partialC3 = ', FYR_C3
-    FYR_C4 = FYR_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
+    FYR_C4 = FYR_partialC4(l, Sn, yf, lam, B, C0, D0, mu, dn)
     !write(*,*) 'FYR_partialC4 = ', FYR_C4
-    F1C = F1_partialC(l, S, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
+    F1C = F1_partialC(l, Sn, yr, mu, C0, FYR_int1, FYR_int2, FYR_int3, FYR_int4, &
       FYR_C1, FYR_C2, FYR_C3, FYR_C4)
     write(*,*) 'F1C = ', F1C
     
@@ -1031,18 +1077,18 @@ program darden
     !write(*,*) 'Qterm3 = ', Q3
     Q4 = Qterm4(l, yf, yr, lam, B, D0, dn)
     !write(*,*) 'Qterm4 = ', Q4
-    F20 = F2initial(l, S, yf, yr, B, D0, Q1, Q2, Q3, Q4)
+    F20 = F2initial(l, Sn, yf, yr, B, D0, Q1, Q2, Q3, Q4)
     write(*,*) 'F20 = ', F20
 
-    QC1 = Q_partialC1(l, S, yf, yr, A, C0, mu, dn)
+    QC1 = Q_partialC1(l, Sn, yf, yr, A, C0, mu, dn)
     !write(*,*) 'QC1 = ', QC1
-    QC2 = Q_partialC2(l, S, yf, yr, A, C0, mu, dn)
+    QC2 = Q_partialC2(l, Sn, yf, yr, A, C0, mu, dn)
     !write(*,*) 'QC2 = ', QC2
-    QC3 = Q_partialC3(l, S, yf, yr, lam, B, C0, mu, dn)
+    QC3 = Q_partialC3(l, Sn, yf, yr, lam, B, C0, mu, dn)
     !write(*,*) 'QC3 = ', QC3
-    QC4 = Q_partialC4(l, S, yf, lam, B, C0, D0, mu, dn)
+    QC4 = Q_partialC4(l, Sn, yf, lam, B, C0, D0, mu, dn)
     !write(*,*) 'QC4 = ', QC4
-    F2C = F2_partialC(l, S, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4)
+    F2C = F2_partialC(l, Sn, yf, B, mu, C0, D0, QC1, QC2, QC3, QC4)
     write(*,*) 'F2C = ', F2C
 
     F2D = F2_partialD(l, yr, lam, dn)
@@ -1065,11 +1111,11 @@ program darden
       C0_n = C0 + dC
       D0_n = D0 + dD
       CaddD = C0_n + D0_n
-      A_n    = cal_A(C0_n, S, yf)
+      A_n    = cal_A(C0_n, Sn, yf)
       lam1_n = cal_lam1(A_n, yf, l)
       lam2_n = cal_lam2(A_n, C0_n, yf, lyfh)
       lam3_n = cal_lam3(A_n, B, C0_n, yf, lyf)
-      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Ae_l)
+      lam4_n = cal_lam4(lam1_n, lam2_n, lam3_n, Se_l)
       lam_n  = cal_lam(l, lam4, C0_n , D0_n)
       write(*,*) 'C0_n =', C0_n
       write(*,*) 'D0_n =', D0_n
@@ -1182,7 +1228,8 @@ program darden
   write(*,*) 'k = ', k
   write(*,*) 's = ', s
   write(*,*) 's2 = ', s2
-  write(*,*) 'Ae_l = ', Ae_l
+  write(*,*) 'sn = ', sn
+  write(*,*) 'Se_l = ', Se_l
 
   write(*,*) 'A = ', A
   write(*,*) 'yr = ', yr
@@ -1210,12 +1257,14 @@ program darden
   write(20,*) '             !---Division number---!'
   write(20,'(f16.10)', advance = 'no') yr
   write(20,*) '  !---paramater yr(%)---!'
-  write(20,'(f16.10)', advance = 'no') Ae_l
-  write(20,*) '  !---calculation result of Ae @x=l---!'
+  write(20,'(f16.10)', advance = 'no') Se_l
+  write(20,*) '  !---calculation result of Se @x=l---!'
   write(20,'(f16.10)', advance = 'no') S
   write(20,*) '  !---slope of balancing point---!'
   write(20,'(f16.10)', advance = 'no') S2
   write(20,*) '  !---slope of balancing point 2---!'
+  write(20,'(f16.10)', advance = 'no') Sn
+  write(20,*) '  !---slope of balancing point n---!'
   write(20,'(i5)', advance = 'no') i
   write(20,*) '  !---Iteration number of calculation---!'
 
