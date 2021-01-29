@@ -163,9 +163,9 @@ module Darden_variable
 
     end function cal_S2
 
-    function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Ae_l)
+    function cal_Se_l(beta, W, rho_inf, u_inf, unit) Result(Se_l)
       real(8), intent(in) :: beta, W, rho_inf, u_inf
-      real(8) g, Ae_l
+      real(8) g, Se_l
       integer, intent(in) :: unit
 
       if (unit == 1) then
@@ -176,9 +176,25 @@ module Darden_variable
         stop 'cal_Ae error, invalid unit system number is entered!!!'
       end if
 
-      Ae_l = beta * W * g /(rho_inf * u_inf**2.0d0)
+      Se_l = beta * W * g /(rho_inf * u_inf**2.0d0)
 
     end function cal_Se_l
+
+    function set_B(Sn, percen, sig) Result(B)
+      real(8), intent(in) ::Sn, percen
+      real(8) B
+      integer, intent(in) :: sig
+      
+      if (sig == 0) then
+        B = 0.0d0
+      else if (sig == 1) then
+        B = percen * Sn
+      else
+        stop 'set_B error! please check sig is integer. percen less than 1. '
+      end if
+    
+    end function set_B
+
 
     function cal_A(C0, S, yf) Result(A)
       real(8), intent(in) :: C0, S, yf
@@ -236,11 +252,11 @@ module Darden_variable
 
     end function cal_lam3
 
-    function cal_lam4(lam1, lam2, lam3, Ae_l) Result(lam4)
-      real(8), intent(in) :: lam1, lam2, lam3, Ae_l
+    function cal_lam4(lam1, lam2, lam3, Se_l) Result(lam4)
+      real(8), intent(in) :: lam1, lam2, lam3, Se_l
       real(8) lam4
 
-      lam4 = lam1 + lam2 + lam3 - Ae_l
+      lam4 = lam1 + lam2 + lam3 - Se_l
 
     end function cal_lam4
 
@@ -252,4 +268,4 @@ module Darden_variable
 
     end function cal_lam
   
-  end module Darden_variable
+end module Darden_variable
