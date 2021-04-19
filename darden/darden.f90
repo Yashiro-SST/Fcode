@@ -678,7 +678,8 @@ module Darden_variable
       if (unit == 1) then
         S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
       else if (unit == 0) then
-        S = 0.00026967727
+        S = 1.0d0 / (k * sqrt(abs(h_inf / l)))
+        !S = 0.00026967727
       else
         stop 'cal_S error, invalid unit system number is entered!!!'
       end if
