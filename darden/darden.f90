@@ -1,7 +1,66 @@
 !=======================================================================!
 ! program  Culculation of  Darden's  F function	parameter			  				!
-!	input	 :	input_darden.txt										!
-!	output	:	F function parameter.txt												!
+!	input	 :	input_darden.txt									                        	!
+!	output	:	F function parameter.txt								            				!
+! Variable List
+! A -------------Darden's variable
+! a_inf ---------speed of sound @ flight hight
+! B -------------Darden's variable
+! beta-----------beta = sqrt(abs(M_inf**2.0d0 - 1.0d0))
+! C -------------Darden's variable
+! C0 ------------initial value of C
+! D -------------Darden's variable
+! D0 ------------initial value of D
+! dn ------------Division number @ integral
+! eps -----------allowable error
+! errC ----------
+! errD ----------
+! F -------------Darden's F function (array) 
+! F10 -----------
+! F1C -----------Partial derivative of F1 with respect to C
+! F1D -----------Partial derivative of F1 with respect to D
+! F20 -----------
+! F2C -----------Partial derivative of F2 with respect to C
+! F2D -----------Partial derivative of F2 with respect to D
+! FYR_C1 --------
+! FYR_C2 --------
+! FYR_C3 --------
+! FYR_C4 --------
+! FYR_int1 ------
+! FYR_int2 ------
+! FYR_int3 ------
+! FYR_int4 ------
+! g -------------Gravitational acceleration
+! gamma ---------Specific heat ratio
+! h_inf ---------Flight hight 
+! i -------------loop number
+! ite_max--------Maximum number of iterations
+! j -------------loop number
+! k -------------Variable when calculating S 
+! kr ------------Reflection coefficient of the ground
+! l -------------Effective length
+! M_inf----------Mach number
+! mu ------------front/rear shock ratio
+! P
+! pi ------------Pi 
+! Q1 ------------1st interval of integration in F2
+! Q2 ------------2nd interval of integration in F2
+! Q3 ------------3rd interval of integration in F2
+! Q4 ------------4th interval of integration in F2
+! QC1 -----------Partial derivative of Q1 with respect to C
+! QC2 -----------Partial derivative of Q2 with respect to C
+! QC3 -----------Partial derivative of Q3 with respect to C
+! QC4 -----------Partial derivative of Q4 with respect to C
+! r -------------Gas constant(Air)
+! s 
+! T_inf ---------Tenparature @ Flight height 
+! u_inf ---------Flight speed 
+! unit-----------Unit System Change yardpond(0), MKS(1)
+! w -------------Weight 
+! x 
+! y
+! yf ------------Darden's variable
+! z 
 !=======================================================================!
 
 !---module function of solve integral F1, F2---!
@@ -706,7 +765,7 @@ module Darden_variable
       if (unit == 1) then
         T_slope = 0.0065          !---difference of temparature[K] per a hight[m]
       else if (unit == 0) then
-        T_slope = 0.0065 / 3.28084
+        T_slope = 0.0065 / 3.28084   !--- 1m = 3.28084ft
       else
         stop 'cal_T_slope error, invalid unit system number is entered!!!'
       end if
@@ -719,7 +778,7 @@ module Darden_variable
         stop 'cal_zc error, invalid unit system number is entered!!!'
       end if
       
-      Mh = M_inf         !---if hight where cal initial wave form is higher from zc 
+      Mh = M_inf         !---if hight where calc initial wave form is higher than zc 
       Th = Tc            !---same as above
       gamma_l = (gamma + 1) / 2
 
@@ -732,7 +791,7 @@ module Darden_variable
       do j = 0, dn
         !---z is vertical distance of signal from airplane axis---!
         z = dz * dble(j)
-        if (0 <= z .and. z <= z_sp) then               !---temparature value at Stratospere
+        if (0 <= z .and. z <= z_sp) then               !---temparature value at Stratosphere
           T_z = Tc
         else if (z_sp < z .and. z <= h_inf) then       !---temparature value at Troposphere
           T_z = Tc + T_slope * z
@@ -762,7 +821,7 @@ module Darden_variable
 
       do i = 0, dn
         z = dz * dble(i)
-        if (0 <= z .and. z <= z_sp) then             !---temparature value at Stratospere
+        if (0 <= z .and. z <= z_sp) then             !---temparature value at Stratosphere
           T_z = Tc
         else if (z_sp < z .and. z <= h_inf) then     !---temparature value at Troposphere
           T_z = Tc + T_slope * z
@@ -932,7 +991,7 @@ program darden
   read(10,*) Scal                !---0:S calc on Isothermal atmosphere, 1: Real atmosphere
   read(10,*) M_inf               !---Mach number
   read(10,*) h_inf               !---Flight height
-  read(10,*) W                   !---Weight
+  read(10,*) W                   !---Weight [kg]
   read(10,*) l                   !---Effective length
   read(10,*) yf                  !---yf position
   read(10,*) rho_inf             !---density @Flight height
