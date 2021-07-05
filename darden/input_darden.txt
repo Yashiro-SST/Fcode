@@ -4,16 +4,16 @@
 1                     !---0:S calc on Isothermal atmosphere, 1: Real atmosphere
 1.4d0                 !---Mach number
 13800d0               !---Flight height
-13935.94285d0         !---Weight
-24.46215d0            !---Effective length
+16000d0                !---Weight
+25.0d0                !---Effective length
 1.0d0                 !---yf position
 0.235124d0            !---density @Flight height
 216.650d0             !---Tenparature @Flight height
 1.4d0                 !---Specific heat ratio
 287.042               !---Gas constant(Air)
-0.01d0                !---initial C0
-0.01d0                !---initial D0
+0.05d0                !---initial C0
+0.05d0                !---initial D0
 5000                  !---Division number @ integral(0 to le)
-5000                  !---Maximum number of iterations
+2000                  !---Maximum number of iterations
 1                     !---Unit System Change yardpond/Darden(0).or.MKS(1)
 1.0E-3                !---allowable error "epsilon"
