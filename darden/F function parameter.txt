@@ -1,14 +1,14 @@
-   24.4621500000   !---length---!
-    0.0365832848   !---paramater A---!
+   25.0000000000   !---length---!
+    0.0420297925   !---paramater A---!
     0.0000000000   !---paramater B---!
-    0.0100918143   !---paramater C---!
-    0.0186564321   !---paramater D---!
+    0.0107718321   !---paramater C---!
+    0.0211977972   !---paramater D---!
     1.0000000000   !---paramater yf---!
-   23.0700891190   !---paramater lamda---!
+   24.7338569625   !---paramater lamda---!
  5000              !---Division number---!
-   28.5898374268   !---paramater yr(%)---!
-    3.3373937375   !---calculation result of Se @x=l---!
-    0.0062632941   !---slope of balancing point---!
+   29.4052109584   !---paramater yr(%)---!
+    3.8316962386   !---calculation result of Se @x=l---!
+    0.0063317754   !---slope of balancing point---!
     0.0024431270   !---slope of balancing point 2---!
     0.0024431270   !---slope of balancing point n---!
-  225   !---Iteration number of calculation---!
+  424   !---Iteration number of calculation---!
